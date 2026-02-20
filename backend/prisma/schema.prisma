@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  brand       String?
+  category    String
+  unitSize    String
+  barcode     String?  @unique
+  basePrice   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventory   ShopInventory[]
+  saleItems   SaleItem[]
+  dailySummaries  DailyProductSummary[]
+}
+
+model ShopInventory {
+  id          String   @id @default(uuid())
+  productId   String
+  quantity    Int
+  lastUpdated DateTime @updatedAt
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model Sale {
+  id              String   @id @default(uuid())
+  saleNumber      String
+  saleDate        DateTime @default(now())
+  totalAmount     Float
+  status          String
+  revisionNumber  Int      @default(1)
+  isSynced        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items           SaleItem[]
+}
+
+model SaleItem {
+  id          String  @id @default(uuid())
+  saleId      String
+  productId   String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+
+  sale        Sale    @relation(fields: [saleId], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+
+model DailyClosing {
+  id                    String   @id @default(uuid())
+  date                  DateTime
+  totalSalesAmount      Float
+  totalSalesQuantity    Int
+  totalClosingValue     Float
+  status                String
+  revisionNumber        Int      @default(1)
+  createdAt             DateTime @default(now())
+
+  summaries             DailyProductSummary[]
+
+  @@unique([date])
+}
+
+
+model DailyProductSummary {
+  id              String   @id @default(uuid())
+  dailyClosingId  String
+  productId       String
+  openingStock    Int
+  receivedStock   Int
+  totalStock      Int
+  soldQuantity    Int
+  saleAmount      Float
+  closingStock    Int
+  closingValue    Float
+
+  dailyClosing    DailyClosing @relation(fields: [dailyClosingId], references: [id])
+  product         Product      @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+}
