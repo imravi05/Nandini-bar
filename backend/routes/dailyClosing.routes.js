@@ -5,7 +5,7 @@ import {
   reopenDay
 } from "../controllers/dailyClosing.controller.js";
 
-import { validate } from "../middleware/validate.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import {
   dateQuerySchema,
   reopenSchema

@@ -5,10 +5,11 @@ import {
   deleteSale
 } from "../controllers/sales.controller.js";
 
-import { validate } from "../middleware/validate.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import {
   createSaleSchema,
-  saleIdParamSchema
+  saleIdParamSchema,
+  salesQuerySchema
 } from "../validations/sale.validation.js";
 
 const router = express.Router();
@@ -26,5 +27,9 @@ router.delete(
   validate(saleIdParamSchema, "params"),
   deleteSale
 );
-
+router.get(
+  "/",
+  validate(salesQuerySchema, "query"),
+  getSales
+);
 export default router;

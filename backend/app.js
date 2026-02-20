@@ -6,6 +6,7 @@ import inventoryRoutes from "./routes/inventory.routes.js";
 import salesRoutes from "./routes/sales.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import dailyClosingRoutes from "./routes/dailyClosing.routes.js";
+import auditRoutes from "./routes/audit.routes.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/daily", dailyClosingRoutes);
+app.use("/api/audit", auditRoutes);
 
 // Global error handler
 app.use(errorHandler);

@@ -12,3 +12,12 @@ export const createSaleSchema = z.object({
 export const saleIdParamSchema = z.object({
   id: z.string().uuid()
 });
+export const salesQuerySchema = z.object({
+  page: z.string().optional(),
+  limit: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  productId: z.string().uuid().optional(),
+  minAmount: z.string().optional(),
+  maxAmount: z.string().optional()
+});

@@ -3,7 +3,7 @@ import {
   getInventory,
   adjustInventory
 } from "../controllers/inventory.controller.js";
-import { validate } from "../middleware/validate.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
 import { adjustInventorySchema } from "../validations/inventory.validation.js";
 
 const router = express.Router();
