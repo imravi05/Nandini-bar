@@ -1,8 +1,30 @@
 import express from "express";
-import { createSale } from "../controllers/sales.controller.js";
+import {
+  createSale,
+  getSales,
+  deleteSale
+} from "../controllers/sales.controller.js";
+
+import { validate } from "../middleware/validate.middleware.js";
+import {
+  createSaleSchema,
+  saleIdParamSchema
+} from "../validations/sale.validation.js";
 
 const router = express.Router();
 
-router.post("/", createSale);
+router.get("/", getSales);
+
+router.post(
+  "/",
+  validate(createSaleSchema),
+  createSale
+);
+
+router.delete(
+  "/:id",
+  validate(saleIdParamSchema, "params"),
+  deleteSale
+);
 
 export default router;

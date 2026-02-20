@@ -1,17 +1,14 @@
-import prisma from "../config/prisma.js";
-
 export const createSale = async (items) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // 🔒 Check if day is closed
   const closing = await prisma.dailyClosing.findUnique({
     where: { date: today }
   });
 
   if (closing && closing.status === "CLOSED") {
-  throw new Error("Sales not allowed. Day already closed.");
-}
+    throw new Error("Sales not allowed. Day already closed.");
+  }
 
   return prisma.$transaction(async (tx) => {
     let totalAmount = 0;
@@ -25,7 +22,15 @@ export const createSale = async (items) => {
         throw new Error("Insufficient stock");
       }
 
-      totalAmount += item.quantity * item.unitPrice;
+      const product = await tx.product.findUnique({
+        where: { id: item.productId }
+      });
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      totalAmount += item.quantity * product.basePrice;
     }
 
     const sale = await tx.sale.create({
@@ -37,13 +42,17 @@ export const createSale = async (items) => {
     });
 
     for (const item of items) {
+      const product = await tx.product.findUnique({
+        where: { id: item.productId }
+      });
+
       await tx.saleItem.create({
         data: {
           saleId: sale.id,
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.quantity * item.unitPrice
+          unitPrice: product.basePrice,
+          totalPrice: item.quantity * product.basePrice
         }
       });
 

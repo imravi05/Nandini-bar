@@ -1,16 +1,13 @@
-import * as salesService from "../services/sales.service.js";
-
-export const createSale = async (req, res, next) => {
+export const deleteSale = async (req, res, next) => {
   try {
-    const { items } = req.body;
+    const { id } = req.params;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: "Invalid sale items" });
-    }
+    const result = await salesService.deleteSale(id);
 
-    const sale = await salesService.createSale(items);
-
-    res.status(201).json(sale);
+    res.json({
+      success: true,
+      message: result.message
+    });
   } catch (error) {
     next(error);
   }
