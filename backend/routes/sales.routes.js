@@ -11,6 +11,8 @@ import {
   saleIdParamSchema,
   salesQuerySchema
 } from "../validations/sale.validation.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
+import { authorizeRoles } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
@@ -31,5 +33,21 @@ router.get(
   "/",
   validate(salesQuerySchema, "query"),
   getSales
+);
+
+router.post(
+  "/",
+  authenticate,
+  authorizeRoles("ADMIN", "CASHIER"),
+  validate(createSaleSchema),
+  createSale
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  authorizeRoles("ADMIN"),
+  validate(saleIdParamSchema, "params"),
+  deleteSale
 );
 export default router;
