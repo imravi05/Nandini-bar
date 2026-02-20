@@ -1,5 +1,7 @@
 import express from "express";
-import cors from "cors";
+import cors from "cors"
+import dotenv from "dotenv";
+import helmet from "helmet";
 
 import productRoutes from "./routes/product.routes.js";
 import inventoryRoutes from "./routes/inventory.routes.js";
@@ -14,6 +16,8 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(helmet());
+dotenv.config();
 
 // Health check
 app.get("/health", (req, res) => {
