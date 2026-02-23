@@ -22,7 +22,7 @@ export const registerUser = async (data) => {
 export const loginUser = async (email, password) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
-  if (!user || !user.isActive) {
+  if (!user?.isActive) {
     throw new Error("Invalid credentials");
   }
 
