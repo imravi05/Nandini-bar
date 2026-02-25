@@ -1,5 +1,9 @@
 export const errorHandler = (err, req, res, next) => {
-  console.error(err);
+
+  if(res.headersSent){
+    return next(err);
+  }
+  console.error("ERROR",err);
 
   res.status(500).json({
     success: false,
