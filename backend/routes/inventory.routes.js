@@ -1,19 +1,44 @@
 import express from "express";
 import {
   getInventory,
-  adjustInventory
+  createInventory,
+  adjustInventory,
+  updateInventory,
+  deleteInventory,
+  getStockAdjustments
 } from "../controllers/inventory.controller.js";
-import { validate } from "../middlewares/validate.middleware.js";
-import { adjustInventorySchema } from "../validations/inventory.validation.js";
+
+import { authenticate } from "../middlewares/auth.middleware.js";
+import { authorizeRoles } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
-router.get("/", getInventory);
+router.use(authenticate);
 
+/* GET */
+router.get("/", authorizeRoles("ADMIN", "INVENTORY"), getInventory);
+
+/* CREATE */
+router.post("/", authorizeRoles("ADMIN"), createInventory);
+
+/* ADJUST */
 router.post(
   "/adjust",
-  validate(adjustInventorySchema),
+  authorizeRoles("ADMIN", "INVENTORY"),
   adjustInventory
+);
+
+/* UPDATE EXACT */
+router.put("/:id", authorizeRoles("ADMIN"), updateInventory);
+
+/* DELETE */
+router.delete("/:id", authorizeRoles("ADMIN"), deleteInventory);
+
+/* HISTORY */
+router.get(
+  "/adjustments/:productId",
+  authorizeRoles("ADMIN"),
+  getStockAdjustments
 );
 
 export default router;

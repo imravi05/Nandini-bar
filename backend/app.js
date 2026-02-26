@@ -10,6 +10,7 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 import dailyClosingRoutes from "./routes/dailyClosing.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/users.routes.js";
 
 const app = express();
 
@@ -31,6 +32,8 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/daily", dailyClosingRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/auth",authRoutes);
+app.use("/api/users",userRoutes);
+
 
 // Global error handler
 app.use(errorHandler);
