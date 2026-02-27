@@ -5,20 +5,19 @@ import prisma from "../config/prisma.js";
 export const getInventory = async () => {
   return prisma.shopInventory.findMany({
     include: { product: true },
-    orderBy: { updatedAt: "desc" }
+    orderBy: { lastUpdated: "desc" },
   });
 };
 
 /* ---------------- CREATE INVENTORY (Initial Stock) ---------------- */
 
 export const createInventory = async (productId, quantity) => {
-
   if (quantity < 0) {
     throw new Error("Quantity cannot be negative");
   }
 
   const product = await prisma.product.findUnique({
-    where: { id: productId }
+    where: { id: productId },
   });
 
   if (!product) {
@@ -26,7 +25,7 @@ export const createInventory = async (productId, quantity) => {
   }
 
   const existing = await prisma.shopInventory.findUnique({
-    where: { productId }
+    where: { productId },
   });
 
   if (existing) {
@@ -36,20 +35,19 @@ export const createInventory = async (productId, quantity) => {
   return prisma.shopInventory.create({
     data: {
       productId,
-      quantity
-    }
+      quantity,
+    },
   });
 };
 
 /* ---------------- ADJUST INVENTORY (Increment/Decrement) ---------------- */
 
 export const adjustInventory = async (productId, changeQty, reason) => {
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
-    where: { date: today }
+    where: { date: today },
   });
 
   if (closing && closing.status === "CLOSED") {
@@ -57,9 +55,8 @@ export const adjustInventory = async (productId, changeQty, reason) => {
   }
 
   return prisma.$transaction(async (tx) => {
-
     const inventory = await tx.shopInventory.findUnique({
-      where: { productId }
+      where: { productId },
     });
 
     if (!inventory) {
@@ -76,13 +73,13 @@ export const adjustInventory = async (productId, changeQty, reason) => {
       data: {
         productId,
         changeQty,
-        reason
-      }
+        reason,
+      },
     });
 
     return tx.shopInventory.update({
       where: { id: inventory.id },
-      data: { quantity: newQty }
+      data: { quantity: newQty },
     });
   });
 };
@@ -90,7 +87,6 @@ export const adjustInventory = async (productId, changeQty, reason) => {
 /* ---------------- UPDATE INVENTORY (Set Exact Quantity) ---------------- */
 
 export const updateInventory = async (id, quantity, reason) => {
-
   if (quantity < 0) {
     throw new Error("Quantity cannot be negative");
   }
@@ -99,7 +95,7 @@ export const updateInventory = async (id, quantity, reason) => {
   today.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
-    where: { date: today }
+    where: { date: today },
   });
 
   if (closing && closing.status === "CLOSED") {
@@ -107,9 +103,8 @@ export const updateInventory = async (id, quantity, reason) => {
   }
 
   return prisma.$transaction(async (tx) => {
-
     const inventory = await tx.shopInventory.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!inventory) {
@@ -122,13 +117,13 @@ export const updateInventory = async (id, quantity, reason) => {
       data: {
         productId: inventory.productId,
         changeQty: difference,
-        reason
-      }
+        reason,
+      },
     });
 
     return tx.shopInventory.update({
       where: { id },
-      data: { quantity }
+      data: { quantity },
     });
   });
 };
@@ -136,9 +131,8 @@ export const updateInventory = async (id, quantity, reason) => {
 /* ---------------- DELETE INVENTORY ---------------- */
 
 export const deleteInventory = async (id) => {
-
   const inventory = await prisma.shopInventory.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!inventory) {
@@ -150,7 +144,7 @@ export const deleteInventory = async (id) => {
   }
 
   return prisma.shopInventory.delete({
-    where: { id }
+    where: { id },
   });
 };
 
@@ -159,6 +153,6 @@ export const deleteInventory = async (id) => {
 export const getStockAdjustments = async (productId) => {
   return prisma.stockAdjustment.findMany({
     where: { productId },
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
   });
 };
