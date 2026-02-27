@@ -7,8 +7,7 @@ export const createProduct = async (req, res, next) => {
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     console.log("Error creating product:", error);
-   // next(error);
-
+    // next(error);
   }
 };
 
@@ -19,7 +18,7 @@ export const getProducts = async (req, res, next) => {
     res.json({ success: true, ...result });
   } catch (error) {
     console.error("Error fetching products:", error);
-  //  next(error);
+    //  next(error);
   }
 };
 
@@ -37,10 +36,7 @@ export const getProductById = async (req, res, next) => {
 /* UPDATE */
 export const updateProduct = async (req, res, next) => {
   try {
-    const product = await productService.updateProduct(
-      req.params.id,
-      req.body
-    );
+    const product = await productService.updateProduct(req.params.id, req.body);
     res.json({ success: true, data: product });
   } catch (error) {
     console.error("Error updating product:", error);
@@ -55,6 +51,6 @@ export const deleteProduct = async (req, res, next) => {
     res.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
-   // next(error);
+    // next(error);
   }
 };
