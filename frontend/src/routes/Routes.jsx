@@ -12,6 +12,7 @@ import Layout from "../layout/layout";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Products from "../pages/Products";
+import InventoryPage from "../pages/Inventory/InventoryPage";
 
 export default function AppRoutes() {
   return (
@@ -42,7 +43,7 @@ export default function AppRoutes() {
           {/* You can add more secure pages here down the line 👇 */}
           {/* <Route path="/pos" element={<POS />} /> */}
           <Route path="/products" element={<Products />} />
-          {/* <Route path="/inventory" element={<Inventory />} /> */}
+          <Route path="/inventory" element={<InventoryPage />} />
         </Route>
       </Route>
 
