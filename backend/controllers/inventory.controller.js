@@ -1,83 +1,120 @@
 import * as inventoryService from "../services/inventory.service.js";
 
-/* GET ALL */
-export const getInventory = async (req, res, next) => {
+/**
+ * @desc    Get all inventory items with product details
+ * @route   GET /api/inventory
+ */
+export const getInventory = async (req, res) => {
   try {
-    const result = await inventoryService.getInventory();
-    res.json({ success: true, message: "Inventory retrieved", data: result });
+    const inventory = await inventoryService.getInventory();
+    res.status(200).json({
+      success: true,
+      data: inventory,
+    });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-/* CREATE */
-export const createInventory = async (req, res, next) => {
+/**
+ * @desc    Restock a product (Increments existing stock)
+ * @route   POST /api/inventory/restock
+ */
+export const restock = async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, costPrice, reason } = req.body;
 
-    const result = await inventoryService.createInventory(
-      productId,
-      quantity
+    // Validation
+    if (!productId || !quantity) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Product ID and quantity are required for restocking" 
+      });
+    }
+
+    const result = await inventoryService.restockInventory(
+      productId, 
+      Number(quantity), 
+      Number(costPrice) || 0, 
+      reason
     );
 
-    res.status(201).json({ success: true, message: "Inventory created", data: result });
+    res.status(200).json({
+      success: true,
+      message: "Inventory restocked successfully",
+      data: result,
+    });
   } catch (error) {
-    next(error);
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* ADJUST */
-export const adjustInventory = async (req, res, next) => {
+/**
+ * @desc    Manual stock adjustment (For damages, corrections, etc.)
+ * @route   PATCH /api/inventory/adjust
+ */
+export const handleUpdate = async (req, res) => {
   try {
     const { productId, changeQty, reason } = req.body;
 
-    const result = await inventoryService.adjustInventory(
-      productId,
-      changeQty,
+    if (!productId || changeQty === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Product ID and change quantity are required" 
+      });
+    }
+
+    const updated = await inventoryService.adjustInventory(
+      productId, 
+      Number(changeQty), 
       reason
     );
 
-    res.json({ success: true, message: "Inventory adjusted", data: result });
+    res.status(200).json({
+      success: true,
+      message: "Stock adjusted successfully",
+      data: updated,
+    });
   } catch (error) {
-    next(error);
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* UPDATE EXACT */
-export const updateInventory = async (req, res, next) => {
+/**
+ * @desc    Get adjustment history for a specific product
+ * @route   GET /api/inventory/history/:productId
+ */
+export const getHistory = async (req, res) => {
   try {
-    const { quantity, reason } = req.body;
+    const { productId } = req.params;
 
-    const result = await inventoryService.updateInventory(
-      req.params.id,
-      quantity,
-      reason
-    );
+    if (!productId) {
+      return res.status(400).json({ success: false, message: "Product ID is required" });
+    }
 
-    res.json({ success: true, message: "Inventory updated", data: result });
+    const history = await inventoryService.getStockAdjustments(productId);
+    res.status(200).json({
+      success: true,
+      data: history,
+    });
   } catch (error) {
-    next(error);
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
-/* DELETE */
-export const deleteInventory = async (req, res, next) => {
+/**
+ * @desc    Delete an inventory record (only if quantity is 0)
+ * @route   DELETE /api/inventory/:id
+ */
+export const deleteInventory = async (req, res) => {
   try {
-    await inventoryService.deleteInventory(req.params.id);
-    res.json({ success: true, message: "Inventory deleted" });
+    const { id } = req.params;
+    await inventoryService.deleteInventory(id);
+    res.status(200).json({
+      success: true,
+      message: "Inventory record deleted successfully",
+    });
   } catch (error) {
-    next(error);
-  }
-};
-
-/* HISTORY */
-export const getStockAdjustments = async (req, res, next) => {
-  try {
-    const result = await inventoryService.getStockAdjustments(
-      req.params.productId
-    );
-    res.json({ success: true, message: "Stock adjustments retrieved", data: result });
-  } catch (error) {
-    next(error);
+    res.status(400).json({ success: false, message: error.message });
   }
 };

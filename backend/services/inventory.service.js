@@ -1,7 +1,5 @@
 import prisma from "../config/prisma.js";
 
-/* ---------------- GET INVENTORY ---------------- */
-
 export const getInventory = async () => {
   return prisma.shopInventory.findMany({
     include: { product: true },
@@ -9,147 +7,85 @@ export const getInventory = async () => {
   });
 };
 
-/* ---------------- CREATE INVENTORY (Initial Stock) ---------------- */
+/* ---------------- RESTOCK INVENTORY (Action-Based) ---------------- */
+/**
+ * Increments stock and logs a RESTOCK event.
+ */
+export const restockInventory = async (productId, quantity, costPrice, reason = "Supplier Restock") => {
+  if (quantity <= 0) throw new Error("Restock quantity must be positive");
 
-export const createInventory = async (productId, quantity) => {
-  if (quantity < 0) {
-    throw new Error("Quantity cannot be negative");
-  }
-
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-  });
-
-  if (!product) {
-    throw new Error("Product not found");
-  }
-
-  const existing = await prisma.shopInventory.findUnique({
-    where: { productId },
-  });
-
-  if (existing) {
-    throw new Error("Inventory already exists for this product");
-  }
-
-  return prisma.shopInventory.create({
-    data: {
-      productId,
-      quantity,
-    },
-  });
-};
-
-/* ---------------- ADJUST INVENTORY (Increment/Decrement) ---------------- */
-
-export const adjustInventory = async (productId, changeQty, reason) => {
+  // Check Daily Closing status
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  const closing = await prisma.dailyClosing.findUnique({
-    where: { date: today },
-  });
-
+  const closing = await prisma.dailyClosing.findUnique({ where: { date: today } });
   if (closing && closing.status === "CLOSED") {
-    throw new Error("Cannot modify inventory after day closing.");
+    throw new Error("Cannot restock after daily closing.");
   }
 
   return prisma.$transaction(async (tx) => {
-    const inventory = await tx.shopInventory.findUnique({
+    // 1. Update or Create Inventory (Upsert prevents "not found" errors)
+    const inventory = await tx.shopInventory.upsert({
       where: { productId },
+      update: {
+        quantity: { increment: quantity },
+        costPrice: costPrice || undefined, // Update cost price if provided
+        lastUpdated: new Date()
+      },
+      create: {
+        productId,
+        quantity,
+        costPrice: costPrice || 0
+      }
     });
 
-    if (!inventory) {
-      throw new Error("Inventory not found");
-    }
+    // 2. Create Audit Trail
+    await tx.stockAdjustment.create({
+      data: {
+        productId,
+        changeQty: quantity,
+        type: "RESTOCK",
+        reason,
+        costPrice: costPrice || 0
+      }
+    });
 
-    const newQty = inventory.quantity + changeQty;
+    return inventory;
+  });
+};
 
-    if (newQty < 0) {
-      throw new Error("Stock cannot be negative");
+/* ---------------- ADJUST INVENTORY (Manual Correction) ---------------- */
+/**
+ * Used for damages, losses, or manual fixes. 
+ * Allows negative changeQty for stock reduction.
+ */
+export const adjustInventory = async (productId, changeQty, reason) => {
+  if (changeQty === 0) throw new Error("Adjustment cannot be zero");
+
+  return prisma.$transaction(async (tx) => {
+    const inventory = await tx.shopInventory.findUnique({ where: { productId } });
+    if (!inventory) throw new Error("Inventory record not found");
+
+    if (inventory.quantity + changeQty < 0) {
+      throw new Error("Stock cannot fall below zero");
     }
 
     await tx.stockAdjustment.create({
       data: {
         productId,
         changeQty,
-        reason,
-      },
+        type: "MANUAL_ADJUSTMENT",
+        reason
+      }
     });
 
     return tx.shopInventory.update({
-      where: { id: inventory.id },
-      data: { quantity: newQty },
+      where: { productId },
+      data: { quantity: { increment: changeQty } }
     });
   });
 };
 
-/* ---------------- UPDATE INVENTORY (Set Exact Quantity) ---------------- */
-
-export const updateInventory = async (id, quantity, reason) => {
-  if (quantity < 0) {
-    throw new Error("Quantity cannot be negative");
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const closing = await prisma.dailyClosing.findUnique({
-    where: { date: today },
-  });
-
-  if (closing && closing.status === "CLOSED") {
-    throw new Error("Cannot modify inventory after day closing.");
-  }
-
-  return prisma.$transaction(async (tx) => {
-    const inventory = await tx.shopInventory.findUnique({
-      where: { id },
-    });
-
-    if (!inventory) {
-      throw new Error("Inventory not found");
-    }
-
-    const difference = quantity - inventory.quantity;
-
-    await tx.stockAdjustment.create({
-      data: {
-        productId: inventory.productId,
-        changeQty: difference,
-        reason,
-      },
-    });
-
-    return tx.shopInventory.update({
-      where: { id },
-      data: { quantity },
-    });
-  });
-};
-
-/* ---------------- DELETE INVENTORY ---------------- */
-
-export const deleteInventory = async (id) => {
-  const inventory = await prisma.shopInventory.findUnique({
-    where: { id },
-  });
-
-  if (!inventory) {
-    throw new Error("Inventory not found");
-  }
-
-  if (inventory.quantity !== 0) {
-    throw new Error("Cannot delete inventory with non-zero stock");
-  }
-
-  return prisma.shopInventory.delete({
-    where: { id },
-  });
-};
-
-/* ---------------- GET STOCK ADJUSTMENT HISTORY ---------------- */
-
+/* ---------------- GET STOCK HISTORY ---------------- */
 export const getStockAdjustments = async (productId) => {
   return prisma.stockAdjustment.findMany({
     where: { productId },

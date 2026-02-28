@@ -1,13 +1,26 @@
 import prisma from "../config/prisma.js";
 
 /* ---------------- CREATE PRODUCT ---------------- */
+export const createProduct = async (productData) => {
+  const { stockQty, costPrice, ...details } = productData;
 
-export const createProduct = async (data) => {
-  return prisma.product.create({
-    data
+
+  return prisma.$transaction(async (tx) => {
+    const product = await tx.product.create({
+      data: details,
+    });
+
+    await tx.inventory.create({
+      data: {
+        productId: product.id,
+        stockQty: Number(stockQty) || 0,
+        costPrice: Number(costPrice) || 0,
+      },
+    });
+
+    return product;
   });
 };
-
 /* ---------------- GET PRODUCTS (Pagination + Search) ---------------- */
 
 export const getProducts = async (query) => {
@@ -31,6 +44,7 @@ export const getProducts = async (query) => {
       where,
       skip,
       take: limit,
+      include:{inventory: true},
       orderBy: { createdAt: "desc" }
     }),
     prisma.product.count({ where })
@@ -69,9 +83,7 @@ export const updateProduct = async (id, data) => {
 };
 
 /* ---------------- DELETE PRODUCT (SAFE) ---------------- */
-
 export const deleteProduct = async (id) => {
-
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
@@ -82,18 +94,18 @@ export const deleteProduct = async (id) => {
 
   if (!product) throw new Error("Product not found");
 
-  // If inventory exists with quantity > 0
-  const hasStock = product.inventory.some(inv => inv.quantity > 0);
-
-  if (hasStock) {
-    throw new Error("Cannot delete product with active inventory");
+  const totalStock = product.inventory.reduce((sum, inv) => sum + inv.stockQty, 0);
+  if (totalStock > 0) {
+    throw new Error("Cannot delete product with active inventory stock");
   }
 
-  if (product.saleItems.length > 0) {
-    throw new Error("Cannot delete product linked to sales history");
+  if (product.saleItems && product.saleItems.length > 0) {
+    throw new Error("Cannot delete product linked to sales history. Try archiving instead.");
   }
 
-  return prisma.product.delete({
-    where: { id }
+  return prisma.$transaction(async (tx) => {
+    
+    await tx.inventory.deleteMany({ where: { productId: id } });
+    return tx.product.delete({ where: { id } });
   });
 };
