@@ -3,6 +3,16 @@ import DataTable from "../components/Table/DataTable";
 import productService from "../services/product.service";
 import toast from "react-hot-toast";
 import { Plus, X } from "lucide-react";
+import SearchableDropdown from "../components/Form/SearchableDropdown";
+import productData from "../../data.json";
+
+// Derive unique, sorted lists from dat.json
+const PREDEFINED_PRODUCT_NAMES = [
+  ...new Set(productData.map((item) => item.product_name)),
+].sort();
+const PREDEFINED_CATEGORIES = [
+  ...new Set(productData.map((item) => item.category)),
+].sort();
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -113,6 +123,27 @@ export default function Products() {
     setIsModalOpen(true);
   };
 
+  /* ---------------- AUTO-FILL PREDEFINED DATA ---------------- */
+  const handleProductNameChange = (selectedName) => {
+    // If user types/selects something, update the name
+    setFormData((prev) => ({ ...prev, name: selectedName }));
+
+    // Find if the selected name exists in our predefined data.json
+    const foundProduct = productData.find(
+      (item) => item.product_name.toLowerCase() === selectedName.toLowerCase(),
+    );
+
+    // If perfectly matched, auto-fill category and unit_size to save time!
+    if (foundProduct) {
+      setFormData((prev) => ({
+        ...prev,
+        name: foundProduct.product_name,
+        category: foundProduct.category,
+        unitSize: foundProduct.unit_size,
+      }));
+    }
+  };
+
   /* ---------------- DELETE PRODUCT ---------------- */
   const handleDeleteProduct = async (product) => {
     if (!window.confirm(`Are you sure you want to delete "${product.name}"?`))
@@ -212,35 +243,31 @@ export default function Products() {
               className="overflow-y-auto space-y-4 pr-2"
             >
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
+                <div className="col-span-2 relative z-50">
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     Product Name *
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <SearchableDropdown
+                    options={PREDEFINED_PRODUCT_NAMES}
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="e.g. Kingfisher Premium"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                    onChange={handleProductNameChange}
+                    placeholder="Search or type product name..."
+                    required={true}
                   />
                 </div>
 
-                <div>
+                <div className="relative z-40">
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     Category *
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <SearchableDropdown
+                    options={PREDEFINED_CATEGORIES}
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
+                    onChange={(val) =>
+                      setFormData({ ...formData, category: val })
                     }
-                    placeholder="e.g. Beer, Whisky"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                    placeholder="Search category..."
+                    required={true}
                   />
                 </div>
 
