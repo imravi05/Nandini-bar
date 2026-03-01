@@ -18,6 +18,7 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -201,7 +202,23 @@ export default function Products() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-1 justify-end">
+        <div className="flex items-center gap-3 flex-1 justify-end flex-wrap">
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition bg-white shrink-0"
+          >
+            <option value="">All Categories</option>
+            {[...new Set(products.map((p) => p.category).filter(Boolean))]
+              .sort()
+              .map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+          </select>
+
           {/* Search bar */}
           <div className="relative w-full max-w-xs">
             <Search
@@ -238,11 +255,15 @@ export default function Products() {
       <div className="flex-1 overflow-hidden">
         <DataTable
           columns={columns}
-          data={products.filter(
-            (p) =>
+          data={products.filter((p) => {
+            const matchSearch =
               p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              p.category?.toLowerCase().includes(searchQuery.toLowerCase()),
-          )}
+              p.category?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchCategory = categoryFilter
+              ? p.category === categoryFilter
+              : true;
+            return matchSearch && matchCategory;
+          })}
           isLoading={isLoading}
           onEdit={handleEditProduct}
           onDelete={handleDeleteProduct}

@@ -11,6 +11,7 @@ export default function InventoryPage() {
   const [productsMaster, setProductsMaster] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   // Modal State (for editing product details only)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -262,42 +263,69 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="relative w-full max-w-xs">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search inventory..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X size={14} />
-            </button>
-          )}
+        {/* Search + Filter row */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition bg-white shrink-0"
+          >
+            <option value="">All Categories</option>
+            {[
+              ...new Set(
+                inventories.map((inv) => inv.product?.category).filter(Boolean),
+              ),
+            ]
+              .sort()
+              .map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+          </select>
+
+          {/* Search bar */}
+          <div className="relative w-full max-w-xs">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search inventory..."
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
         <DataTable
           columns={columns}
-          data={inventories.filter(
-            (inv) =>
+          data={inventories.filter((inv) => {
+            const matchSearch =
               inv.product?.name
                 ?.toLowerCase()
                 .includes(searchQuery.toLowerCase()) ||
               inv.product?.category
                 ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()),
-          )}
+                .includes(searchQuery.toLowerCase());
+            const matchCategory = categoryFilter
+              ? inv.product?.category === categoryFilter
+              : true;
+            return matchSearch && matchCategory;
+          })}
           isLoading={isLoading}
           onEdit={handleEditStock}
           // onDelete={handleDeleteStock}
