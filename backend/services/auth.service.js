@@ -13,8 +13,8 @@ export const registerUser = async (data) => {
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      role: data.role
-    }
+      role: data.role,
+    },
   });
 };
 
@@ -32,11 +32,9 @@ export const loginUser = async (email, password) => {
     throw new Error("Invalid credentials");
   }
 
-  const token = jwt.sign(
-    { userId: user.id, role: user.role },
-    JWT_SECRET,
-    { expiresIn: "8h" }
-  );
+  const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
+    expiresIn: "8h",
+  });
 
-  return { token };
+  return { token, name: user.name };
 };

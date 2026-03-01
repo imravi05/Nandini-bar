@@ -26,9 +26,9 @@ model Product {
 
 model ShopInventory {
   id          String   @id @default(uuid())
-  productId   String   @unique  // Ensure this is unique for safe updates
+  productId   String   @unique
   quantity    Int      @default(0)
-  costPrice   Decimal  @default(0) // Track current stock value
+  costPrice   Decimal  @default(0)
   lastUpdated DateTime @updatedAt
   product     Product  @relation(fields: [productId], references: [id])
 }
@@ -36,13 +36,14 @@ model ShopInventory {
 model StockAdjustment {
   id          String   @id @default(uuid())
   productId   String
-  changeQty   Int      // Positive for restock, negative for damage/loss
-  type        String   // e.g., "RESTOCK", "MANUAL", "DAMAGE", "SALE"
+  changeQty   Int      // Positive for restock, negative for sales/damage
+  type        String   // "RESTOCK", "SALE", "MANUAL_ADJUSTMENT"
   reason      String?
-  costPrice   Decimal? // Record price at time of adjustment
+  costPrice   Decimal? @default(0)
   createdAt   DateTime @default(now())
   product     Product  @relation(fields: [productId], references: [id])
 }
+
 model Sale {
   id              String   @id @default(uuid())
   saleNumber      String

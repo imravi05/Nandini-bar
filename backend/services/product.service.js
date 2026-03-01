@@ -4,16 +4,15 @@ import prisma from "../config/prisma.js";
 export const createProduct = async (productData) => {
   const { stockQty, costPrice, ...details } = productData;
 
-
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.create({
       data: details,
     });
 
-    await tx.inventory.create({
+    await tx.shopInventory.create({
       data: {
         productId: product.id,
-        stockQty: Number(stockQty) || 0,
+        quantity: Number(stockQty) || 0,
         costPrice: Number(costPrice) || 0,
       },
     });
@@ -25,7 +24,7 @@ export const createProduct = async (productData) => {
 
 export const getProducts = async (query) => {
   const page = Number.parseInt(query.page) || 1;
-  const limit =Number.parseInt(query.limit) || 10;
+  const limit = Number.parseInt(query.limit) || 10;
   const skip = (page - 1) * limit;
 
   const where = {};
@@ -35,7 +34,7 @@ export const getProducts = async (query) => {
       { name: { contains: query.search, mode: "insensitive" } },
       { brand: { contains: query.search, mode: "insensitive" } },
       { category: { contains: query.search, mode: "insensitive" } },
-      { barcode: { contains: query.search, mode: "insensitive" } }
+      { barcode: { contains: query.search, mode: "insensitive" } },
     ];
   }
 
@@ -44,10 +43,10 @@ export const getProducts = async (query) => {
       where,
       skip,
       take: limit,
-      include:{inventory: true},
-      orderBy: { createdAt: "desc" }
+      include: { inventory: true },
+      orderBy: { createdAt: "desc" },
     }),
-    prisma.product.count({ where })
+    prisma.product.count({ where }),
   ]);
 
   return {
@@ -56,8 +55,8 @@ export const getProducts = async (query) => {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
-    }
+      totalPages: Math.ceil(total / limit),
+    },
   };
 };
 
@@ -65,7 +64,7 @@ export const getProducts = async (query) => {
 
 export const getProductById = async (id) => {
   const product = await prisma.product.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!product) throw new Error("Product not found");
@@ -78,7 +77,7 @@ export const getProductById = async (id) => {
 export const updateProduct = async (id, data) => {
   return prisma.product.update({
     where: { id },
-    data
+    data,
   });
 };
 
@@ -88,24 +87,28 @@ export const deleteProduct = async (id) => {
     where: { id },
     include: {
       inventory: true,
-      saleItems: true
-    }
+      saleItems: true,
+    },
   });
 
   if (!product) throw new Error("Product not found");
 
-  const totalStock = product.inventory.reduce((sum, inv) => sum + inv.stockQty, 0);
+  const totalStock = product.inventory.reduce(
+    (sum, inv) => sum + inv.quantity,
+    0,
+  );
   if (totalStock > 0) {
     throw new Error("Cannot delete product with active inventory stock");
   }
 
   if (product.saleItems && product.saleItems.length > 0) {
-    throw new Error("Cannot delete product linked to sales history. Try archiving instead.");
+    throw new Error(
+      "Cannot delete product linked to sales history. Try archiving instead.",
+    );
   }
 
   return prisma.$transaction(async (tx) => {
-    
-    await tx.inventory.deleteMany({ where: { productId: id } });
+    await tx.shopInventory.deleteMany({ where: { productId: id } });
     return tx.product.delete({ where: { id } });
   });
 };
