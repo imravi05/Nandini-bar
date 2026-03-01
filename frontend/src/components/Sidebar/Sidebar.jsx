@@ -8,6 +8,7 @@ import {
   Users,
   History,
   X,
+  ShoppingCart,
 } from "lucide-react";
 
 const Sidebar = ({ isMobile, closeMenu }) => {
@@ -15,6 +16,7 @@ const Sidebar = ({ isMobile, closeMenu }) => {
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Products", path: "/products", icon: Package },
     { name: "Inventory", path: "/inventory", icon: ClipboardList },
+    { name: "Sales", path: "/sales", icon: ShoppingCart },
     { name: "Daily Closing", path: "/daily", icon: FileText },
     { name: "Audit Logs", path: "/audit", icon: History },
     { name: "Staff Management", path: "/users", icon: Users },

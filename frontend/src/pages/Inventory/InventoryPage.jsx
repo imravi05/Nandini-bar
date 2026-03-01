@@ -264,7 +264,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Search + Filter row */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
           {/* Category Filter */}
           <select
             value={categoryFilter}

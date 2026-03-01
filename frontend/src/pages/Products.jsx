@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Plus, X, Search } from "lucide-react";
 import SearchableDropdown from "../components/Form/SearchableDropdown";
 import productData from "../../data.json";
+import { LayoutGrid } from "lucide-react";
 
 // Derive unique, sorted lists from dat.json
 const PREDEFINED_PRODUCT_NAMES = [
@@ -193,13 +194,18 @@ export default function Products() {
     <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in">
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-2xl font-bold font-sans text-slate-800">
-            Master Products
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage global product catalog and pricing
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+            <LayoutGrid size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold font-sans text-slate-800">
+              Products
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Manage global product catalog and pricing
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 flex-1 justify-end flex-wrap">
