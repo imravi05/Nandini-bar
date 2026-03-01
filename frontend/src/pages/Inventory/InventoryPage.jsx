@@ -1,28 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import DataTable from "../../components/Table/DataTable";
 import InventoryModal from "../../components/Inventory/InventoryModal";
 import inventoryService from "../../services/inventory.service";
 import productService from "../../services/product.service";
 import toast from "react-hot-toast";
-import { Plus, Package } from "lucide-react";
+import { Package, Check, X, Pencil, Search } from "lucide-react";
 
 export default function InventoryPage() {
   const [inventories, setInventories] = useState([]);
   const [productsMaster, setProductsMaster] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Modal State
+  // Modal State (for editing product details only)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState(null); // Inventory ID
-  const [editingProductId, setEditingProductId] = useState(null); // Product ID
+  const [editingId, setEditingId] = useState(null);
+  const [editingProductId, setEditingProductId] = useState(null);
 
-  // Form State extracted to InventoryModal
+  // Inline stock edit state
+  const [inlineEditId, setInlineEditId] = useState(null);
+  const [inlineStockValue, setInlineStockValue] = useState("");
+  const inlineInputRef = useRef(null);
+
+  // Form State for modal (no stock field — stock is edited inline)
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    stock: "",
-    sellingPrice: "",
+    costPrice: "",
+    reason: "",
   });
 
   // Table Columns Setup
@@ -44,14 +49,66 @@ export default function InventoryPage() {
       ),
     },
     {
-      header: "Stock Level",
+      header: "Stock",
       accessor: "quantity",
-      render: (inv) => (
-        <span className="font-bold text-slate-800">
-          {inv.quantity}{" "}
-          <span className="text-xs font-normal text-slate-400 ml-1">units</span>
-        </span>
-      ),
+      render: (inv) => {
+        const isInlineEditing = inlineEditId === inv.id;
+
+        if (isInlineEditing) {
+          return (
+            <div className="flex items-center gap-1">
+              <input
+                ref={inlineInputRef}
+                type="number"
+                min="0"
+                value={inlineStockValue}
+                onChange={(e) => setInlineStockValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleInlineStockSave(inv);
+                  if (e.key === "Escape") setInlineEditId(null);
+                }}
+                className="w-20 px-2 py-1 text-sm border border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+              <button
+                onClick={() => handleInlineStockSave(inv)}
+                className="p-1 rounded-md bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition"
+                title="Save"
+              >
+                <Check size={14} />
+              </button>
+              <button
+                onClick={() => setInlineEditId(null)}
+                className="p-1 rounded-md bg-red-50 text-red-500 hover:bg-red-100 transition"
+                title="Cancel"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex items-center gap-2 group">
+            <span className="font-bold text-slate-800">
+              {inv.quantity}
+              <span className="text-xs font-normal text-slate-400 ml-1">
+                units
+              </span>
+            </span>
+            <button
+              onClick={() => {
+                setInlineEditId(inv.id);
+                setInlineStockValue(inv.quantity);
+                setTimeout(() => inlineInputRef.current?.focus(), 50);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+              title="Edit stock"
+            >
+              <Pencil size={13} />
+            </button>
+          </div>
+        );
+      },
     },
     {
       header: "Status",
@@ -102,23 +159,42 @@ export default function InventoryPage() {
     fetchData();
   }, []);
 
-  /* ---------------- OPEN MODAL HANDLERS ---------------- */
-  const handleAddStock = () => {
-    setFormData({ name: "", category: "", stock: "", sellingPrice: "" });
-    setIsEditing(false);
-    setEditingId(null);
-    setEditingProductId(null);
-    setIsModalOpen(true);
+  /* ---------------- INLINE STOCK EDIT SAVE ---------------- */
+  const handleInlineStockSave = async (inv) => {
+    const newQty = parseInt(inlineStockValue);
+    if (isNaN(newQty) || newQty < 0) {
+      toast.error("Please enter a valid stock number");
+      return;
+    }
+
+    const changeQty = newQty - inv.quantity;
+    if (changeQty === 0) {
+      setInlineEditId(null);
+      return;
+    }
+
+    try {
+      await inventoryService.adjustInventory(
+        inv.productId,
+        changeQty,
+        changeQty > 0 ? "Stock top-up" : "Stock correction",
+      );
+      toast.success(`Stock updated to ${newQty} units`);
+      setInlineEditId(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update stock");
+    }
   };
 
+  /* ---------------- OPEN EDIT MODAL (product details only) ---------------- */
   const handleEditStock = (inv) => {
     setFormData({
       name: inv.product?.name || "",
       category: inv.product?.category || "",
-      stock: inv.quantity || 0,
-      sellingPrice: inv.product?.basePrice || 0,
+      costPrice: inv.product?.basePrice || 0,
+      reason: "",
     });
-    setIsEditing(true);
     setEditingId(inv.id);
     setEditingProductId(inv.productId);
     setIsModalOpen(true);
@@ -128,7 +204,7 @@ export default function InventoryPage() {
   const handleDeleteStock = async (inv) => {
     if (
       !window.confirm(
-        `Are you sure you want to remove ${inv.product?.name} from inventory?`,
+        `Are you sure you want to remove ${inv.product?.name} from inventory? Stock must be 0 to delete.`,
       )
     )
       return;
@@ -139,103 +215,39 @@ export default function InventoryPage() {
       fetchData();
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to delete inventory",
+        error.response?.data?.message || "Failed to delete. Stock must be 0.",
       );
     }
   };
 
-  /* ---------------- SUBMIT FORM ---------------- */
+  /* ---------------- SUBMIT FORM (product details only) ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const stockQty = parseInt(formData.stock) || 0;
-    const basePrice = parseFloat(formData.sellingPrice) || 0;
+    const costPrice = parseFloat(formData.costPrice) || 0;
+
+    if (!formData.name?.trim()) return toast.error("Product name is required");
+    if (!formData.category?.trim()) return toast.error("Category is required");
 
     try {
-      // 1. IS EDITING AN EXISTING INVENTORY ROW?
-      if (isEditing && editingId) {
-        // Update product base defaults
-        await productService.updateProduct(editingProductId, {
-          name: formData.name,
-          category: formData.category,
-          basePrice,
-        });
-
-        // Exact override update via id for stock
-        await inventoryService.updateInventory(
-          editingId,
-          stockQty,
-          "Manual Override",
-        );
-        toast.success("Inventory updated successfully");
-      }
-
-      // 2. CREATING NEW ENTRY
-      else {
-        // Check if product already exists in the master list, case-insensitive
-        let productIdToUse = null;
-        const existingProduct = productsMaster.find(
-          (p) => p.name.toLowerCase() === formData.name.toLowerCase(),
-        );
-
-        if (existingProduct) {
-          // It exists! Just update its defaults if needed
-          productIdToUse = existingProduct.id;
-          await productService.updateProduct(productIdToUse, {
-            category: formData.category,
-            basePrice,
-          });
-
-          // Check if it already has an inventory record though!
-          const existingInventoryRow = inventories.find(
-            (inv) => inv.productId === productIdToUse,
-          );
-          if (existingInventoryRow) {
-            // Already has inventory, just exact override it
-            await inventoryService.updateInventory(
-              existingInventoryRow.id,
-              stockQty,
-              "Initial Manual Setup",
-            );
-            toast.success(
-              "Existing inventory found; updated stock successfully",
-            );
-          } else {
-            // Does not have an inventory row yet, create it!
-            await inventoryService.createInventory(productIdToUse, stockQty);
-            toast.success("Initial stock created successfully");
-          }
-        } else {
-          // Doesn't exist at all, we must create the product first
-          const newProductRes = await productService.createProduct({
-            name: formData.name,
-            category: formData.category,
-            basePrice,
-            unitSize: "N/A", // Fallback since it wasn't requested in form, can be changed later
-          });
-
-          productIdToUse = newProductRes.id || newProductRes.data?.id;
-
-          if (!productIdToUse)
-            throw new Error("Could not retrieve new product ID");
-
-          // Then create inventory entry
-          await inventoryService.createInventory(productIdToUse, stockQty);
-          toast.success("New product and stock added successfully");
-        }
-      }
-
+      // Update product details only (stock is managed inline)
+      await productService.updateProduct(editingProductId, {
+        name: formData.name,
+        category: formData.category,
+        basePrice: costPrice,
+      });
+      toast.success("Product details updated successfully");
       setIsModalOpen(false);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Action failed");
+      toast.error(error.response?.data?.message || "Update failed");
       console.error(error);
     }
   };
 
   return (
     <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
             <Package size={24} />
@@ -249,22 +261,46 @@ export default function InventoryPage() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleAddStock}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-xl transition flex items-center gap-2 shadow-sm shadow-indigo-200"
-        >
-          <Plus size={18} />
-          <span>Add Inventory</span>
-        </button>
+
+        {/* Search bar */}
+        <div className="relative w-full max-w-xs">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search inventory..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
         <DataTable
           columns={columns}
-          data={inventories}
+          data={inventories.filter(
+            (inv) =>
+              inv.product?.name
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              inv.product?.category
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          )}
           isLoading={isLoading}
           onEdit={handleEditStock}
-          onDelete={handleDeleteStock}
+          // onDelete={handleDeleteStock}
         />
       </div>
 
@@ -274,7 +310,6 @@ export default function InventoryPage() {
         onSubmit={handleSubmit}
         formData={formData}
         setFormData={setFormData}
-        isEditing={isEditing}
       />
     </div>
   );

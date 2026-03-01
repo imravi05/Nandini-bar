@@ -16,7 +16,6 @@ export default function InventoryModal({
   onSubmit,
   formData,
   setFormData,
-  isEditing,
 }) {
   if (!isOpen) return null;
 
@@ -47,7 +46,7 @@ export default function InventoryModal({
       <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl animate-in zoom-in-95 p-6 border border-gray-100 flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-4">
           <h2 className="text-xl font-bold text-slate-800">
-            {isEditing ? "Update Inventory Stock" : "Add Stock Entry"}
+            Edit Product Details
           </h2>
           <button
             type="button"
@@ -58,7 +57,11 @@ export default function InventoryModal({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="overflow-y-auto space-y-4 pr-2">
+        <form
+          onSubmit={onSubmit}
+          noValidate
+          className="overflow-y-auto space-y-4 pr-2"
+        >
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 relative z-50">
               <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -69,7 +72,6 @@ export default function InventoryModal({
                 value={formData.name}
                 onChange={handleProductNameChange}
                 placeholder="Select or type product name..."
-                required={true}
               />
             </div>
 
@@ -82,39 +84,20 @@ export default function InventoryModal({
                 value={formData.category}
                 onChange={(val) => setFormData({ ...formData, category: val })}
                 placeholder="Select category..."
-                required={true}
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Current / New Stock *
-              </label>
-              <input
-                type="number"
-                min="0"
-                required
-                value={formData.stock}
-                onChange={(e) =>
-                  setFormData({ ...formData, stock: e.target.value })
-                }
-                placeholder="e.g. 50"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Selling Price (₹) *
+                Cost Price (₹)
               </label>
               <input
                 type="number"
                 step="any"
                 min="0"
-                required
-                value={formData.sellingPrice}
+                value={formData.costPrice}
                 onChange={(e) =>
-                  setFormData({ ...formData, sellingPrice: e.target.value })
+                  setFormData({ ...formData, costPrice: e.target.value })
                 }
                 placeholder="0.00"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
@@ -134,7 +117,7 @@ export default function InventoryModal({
               type="submit"
               className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-200 transition"
             >
-              {isEditing ? "Save Adjustments" : "Add to Inventory"}
+              Save Changes
             </button>
           </div>
         </form>

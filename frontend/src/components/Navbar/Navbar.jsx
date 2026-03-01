@@ -5,7 +5,7 @@ import authService from "../../services/auth.service";
 
 const Navbar = ({ onMenuClick }) => {
   const navigate = useNavigate();
-  const user = authService.getCurrentUser()?.user;
+  const user = authService.getCurrentUser();
 
   const handleLogout = () => {
     authService.logout();
@@ -28,10 +28,7 @@ const Navbar = ({ onMenuClick }) => {
       </div>
 
       <div className="flex items-center gap-3 sm:gap-5">
-        <button className="relative text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50 hidden sm:block">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
+        <button className="relative text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50 hidden sm:block"></button>
 
         <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
 

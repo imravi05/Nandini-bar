@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import DataTable from "../components/Table/DataTable";
 import productService from "../services/product.service";
 import toast from "react-hot-toast";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Search } from "lucide-react";
 import SearchableDropdown from "../components/Form/SearchableDropdown";
 import productData from "../../data.json";
 
@@ -17,6 +17,7 @@ const PREDEFINED_CATEGORIES = [
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -189,7 +190,8 @@ export default function Products() {
   /* ---------------- RENDER ---------------- */
   return (
     <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      {/* Header */}
+      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
           <h1 className="text-2xl font-bold font-sans text-slate-800">
             Master Products
@@ -198,19 +200,49 @@ export default function Products() {
             Manage global product catalog and pricing
           </p>
         </div>
-        <button
-          onClick={handleAddProduct}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-xl transition flex items-center gap-2 shadow-sm shadow-indigo-200"
-        >
-          <Plus size={18} />
-          <span>Add Product</span>
-        </button>
+
+        <div className="flex items-center gap-3 flex-1 justify-end">
+          {/* Search bar */}
+          <div className="relative w-full max-w-xs">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={handleAddProduct}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-xl transition flex items-center gap-2 shadow-sm shadow-indigo-200 shrink-0"
+          >
+            <Plus size={18} />
+            <span>Add Product</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
         <DataTable
           columns={columns}
-          data={products}
+          data={products.filter(
+            (p) =>
+              p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              p.category?.toLowerCase().includes(searchQuery.toLowerCase()),
+          )}
           isLoading={isLoading}
           onEdit={handleEditProduct}
           onDelete={handleDeleteProduct}

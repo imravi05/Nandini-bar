@@ -1,15 +1,17 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 
 const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
   return (
-    <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full">
+      {/* Sticky header + scrollable body wrapper */}
+      <div className="overflow-auto flex-1">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-gray-100 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+          {/* Sticky column headers */}
+          <thead className="sticky top-0 z-10 bg-slate-50">
+            <tr className="border-b border-gray-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               {columns.map((col, idx) => (
-                <th key={idx} className="px-6 py-4">
+                <th key={idx} className="px-6 py-4 whitespace-nowrap">
                   {col.header}
                 </th>
               ))}
@@ -18,15 +20,16 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
               )}
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100 text-sm">
             {isLoading ? (
               <tr>
                 <td
                   colSpan={columns.length + 1}
-                  className="px-6 py-12 text-center text-slate-400"
+                  className="px-6 py-16 text-center text-slate-400"
                 >
                   <div className="flex justify-center items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
+                    <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
                     Loading data...
                   </div>
                 </td>
@@ -39,7 +42,6 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
                 >
                   {columns.map((col, colIndex) => (
                     <td key={colIndex} className="px-6 py-4 text-slate-700">
-                      {/* Allow custom render function per column, else display raw value */}
                       {col.render ? col.render(row) : row[col.accessor]}
                     </td>
                   ))}
@@ -73,7 +75,7 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
               <tr>
                 <td
                   colSpan={columns.length + 1}
-                  className="px-6 py-12 text-center text-slate-400"
+                  className="px-6 py-16 text-center text-slate-400"
                 >
                   No records found.
                 </td>
@@ -83,29 +85,9 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
         </table>
       </div>
 
-      {/* Basic Pagination Header (Can be expanded if backend supports paginated meta) */}
-      <div className="px-6 py-4 border-t border-gray-100 text-sm text-slate-500 flex justify-between items-center bg-slate-50/50">
-        <p>
-          Showing{" "}
-          <span className="font-semibold text-slate-700">
-            {data?.length || 0}
-          </span>{" "}
-          records
-        </p>
-        <div className="flex gap-1">
-          <button
-            className="p-1 border border-gray-200 rounded-md bg-white text-slate-400 hover:text-indigo-600 disabled:opacity-50"
-            disabled
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            className="p-1 border border-gray-200 rounded-md bg-white text-slate-400 hover:text-indigo-600 disabled:opacity-50"
-            disabled
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+      {/* Footer — just a record count, no pagination buttons */}
+      <div className="px-6 py-3 border-t border-gray-100 bg-slate-50/50 text-xs text-slate-400 shrink-0">
+        {data?.length || 0} records total
       </div>
     </div>
   );
