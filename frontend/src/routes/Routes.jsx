@@ -13,7 +13,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Products from "../pages/Products";
 import InventoryPage from "../pages/Inventory/InventoryPage";
-import {SalesPage} from "../pages/Sales/SalesPage";
+import SalesPage from "../pages/Sales/SalesPage";
 
 export default function AppRoutes() {
   return (

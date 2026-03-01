@@ -54,7 +54,7 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
                             className="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors"
                             title="Edit"
                           >
-                            <Edit size={16} />
+                            <Edit size={20} />
                           </button>
                         )}
                         {onDelete && (
@@ -63,7 +63,7 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
                             className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
                             title="Delete"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={20} />
                           </button>
                         )}
                       </div>
