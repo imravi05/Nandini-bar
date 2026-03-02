@@ -7,7 +7,12 @@ export const generateDailyExcel = async (closingData) => {
   const sheet = workbook.addWorksheet("Daily Report");
 
   const reportDate = new Date(closingData.date);
-  const formattedDate = reportDate.toISOString().split("T")[0];
+  // Use LOCAL date parts to avoid UTC offset shifting the date (e.g. IST midnight = UTC-1 day)
+  const formattedDate = [
+    reportDate.getFullYear(),
+    String(reportDate.getMonth() + 1).padStart(2, "0"),
+    String(reportDate.getDate()).padStart(2, "0"),
+  ].join("-");
 
   // 🟢 TITLE
   sheet.mergeCells("A1:H1");
@@ -28,7 +33,7 @@ export const generateDailyExcel = async (closingData) => {
     "Sold",
     "Sale Amount",
     "Closing",
-    "Closing Value"
+    "Closing Value",
   ]);
 
   headerRow.font = { bold: true };
@@ -39,7 +44,7 @@ export const generateDailyExcel = async (closingData) => {
       top: { style: "thin" },
       bottom: { style: "thin" },
       left: { style: "thin" },
-      right: { style: "thin" }
+      right: { style: "thin" },
     };
   });
 
@@ -58,7 +63,7 @@ export const generateDailyExcel = async (closingData) => {
       item.soldQuantity,
       item.saleAmount,
       item.closingStock,
-      item.closingValue
+      item.closingValue,
     ]);
 
     row.eachCell((cell) => {
@@ -66,7 +71,7 @@ export const generateDailyExcel = async (closingData) => {
         top: { style: "thin" },
         bottom: { style: "thin" },
         left: { style: "thin" },
-        right: { style: "thin" }
+        right: { style: "thin" },
       };
     });
 
@@ -94,7 +99,7 @@ export const generateDailyExcel = async (closingData) => {
     totalSoldQty,
     totalSaleAmount,
     "",
-    totalClosingValue
+    totalClosingValue,
   ]);
 
   totalRow.font = { bold: true };

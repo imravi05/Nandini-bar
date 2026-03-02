@@ -1,86 +1,90 @@
 import prisma from "../config/prisma.js";
 import { generateDailyExcel } from "./excel.service.js";
 
-
 export const closeDay = async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Check if already closed
+  // Only block if genuinely already CLOSED; REOPENED days can be re-closed
   const existing = await prisma.dailyClosing.findUnique({
-    where: { date: today }
+    where: { date: today },
   });
 
-  if (existing) {
-    console.log("Day already closed for date:", today);
+  if (existing && existing.status === "CLOSED") {
     throw new Error("Day already closed");
   }
 
   return prisma.$transaction(async (tx) => {
-    // Get today's sales
+    // Gather today's sales
     const sales = await tx.sale.findMany({
-      where: {
-        saleDate: {
-          gte: today
-        }
-      },
-      include: {
-        items: true
-      }
+      where: { saleDate: { gte: today } },
+      include: { items: true },
     });
 
     let totalSalesAmount = 0;
     let totalSalesQuantity = 0;
-
     const productMap = {};
 
     for (const sale of sales) {
       totalSalesAmount += sale.totalAmount;
-
       for (const item of sale.items) {
         totalSalesQuantity += item.quantity;
-
         if (!productMap[item.productId]) {
-          productMap[item.productId] = {
-            soldQuantity: 0,
-            saleAmount: 0
-          };
+          productMap[item.productId] = { soldQuantity: 0, saleAmount: 0 };
         }
-
         productMap[item.productId].soldQuantity += item.quantity;
         productMap[item.productId].saleAmount += item.totalPrice;
       }
     }
 
-    // Get inventory for closing stock
     const inventories = await tx.shopInventory.findMany({
-      include: { product: true }
+      include: { product: true },
     });
 
     let totalClosingValue = 0;
+    let closingId;
 
-    const closing = await tx.dailyClosing.create({
-      data: {
-        date: today,
-        totalSalesAmount,
-        totalSalesQuantity,
-        totalClosingValue: 0,
-        status: "CLOSED"
-      }
-    });
+    if (existing) {
+      // REOPENED — wipe old summaries and update the record
+      await tx.dailyProductSummary.deleteMany({
+        where: { dailyClosingId: existing.id },
+      });
+      await tx.dailyClosing.update({
+        where: { id: existing.id },
+        data: {
+          totalSalesAmount,
+          totalSalesQuantity,
+          totalClosingValue: 0,
+          status: "CLOSED",
+          revisionNumber: existing.revisionNumber + 1,
+        },
+      });
+      closingId = existing.id;
+    } else {
+      // First close of the day
+      const closing = await tx.dailyClosing.create({
+        data: {
+          date: today,
+          totalSalesAmount,
+          totalSalesQuantity,
+          totalClosingValue: 0,
+          status: "CLOSED",
+        },
+      });
+      closingId = closing.id;
+    }
 
     for (const inv of inventories) {
       const soldData = productMap[inv.productId] || {
         soldQuantity: 0,
-        saleAmount: 0
+        saleAmount: 0,
       };
-
       const closingValue = inv.quantity * inv.product.basePrice;
       totalClosingValue += closingValue;
 
       await tx.dailyProductSummary.create({
         data: {
-          dailyClosingId: closing.id,
+          dailyClosingId: closingId,
           productId: inv.productId,
           openingStock: inv.quantity + soldData.soldQuantity,
           receivedStock: 0,
@@ -88,34 +92,27 @@ export const closeDay = async () => {
           soldQuantity: soldData.soldQuantity,
           saleAmount: soldData.saleAmount,
           closingStock: inv.quantity,
-          closingValue
-        }
+          closingValue,
+        },
       });
     }
 
     await tx.dailyClosing.update({
-      where: { id: closing.id },
-      data: { totalClosingValue }
+      where: { id: closingId },
+      data: { totalClosingValue },
     });
 
     const fullClosing = await tx.dailyClosing.findUnique({
-        where: { id: closing.id },
-        include: {
-        summaries: {
-        include: {
-            product: true
-        }
-        }
-    }
-        });
-
-// Generate Excel AFTER transaction
-        setImmediate(async () => {
-        await generateDailyExcel(fullClosing);
+      where: { id: closingId },
+      include: { summaries: { include: { product: true } } },
     });
 
-        return fullClosing;
+    setImmediate(async () => {
+      await generateDailyExcel(fullClosing);
     });
+
+    return fullClosing;
+  });
 };
 
 export const getDailyReport = async (date) => {
@@ -127,10 +124,10 @@ export const getDailyReport = async (date) => {
     include: {
       summaries: {
         include: {
-          product: true
-        }
-      }
-    }
+          product: true,
+        },
+      },
+    },
   });
 };
 
@@ -139,7 +136,7 @@ export const reopenDay = async (date) => {
   selectedDate.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
-    where: { date: selectedDate }
+    where: { date: selectedDate },
   });
 
   if (!closing) {
@@ -155,7 +152,7 @@ export const reopenDay = async (date) => {
     where: { date: selectedDate },
     data: {
       status: "REOPENED",
-      revisionNumber: closing.revisionNumber + 1
-    }
+      revisionNumber: closing.revisionNumber + 1,
+    },
   });
 };
