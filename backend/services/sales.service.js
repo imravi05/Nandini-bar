@@ -65,7 +65,7 @@ export const createSale = async (items) => {
         data: {
           quantity: { decrement: item.quantity }
         }
-      });
+      });   
     }
 
     return sale;

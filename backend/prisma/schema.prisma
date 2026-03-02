@@ -14,6 +14,7 @@ model Product {
   category    String
   unitSize    String
   barcode     String?  @unique
+
   basePrice   Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
