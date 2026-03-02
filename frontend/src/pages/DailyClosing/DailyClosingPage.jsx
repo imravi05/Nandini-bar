@@ -34,60 +34,68 @@ export default function DailyClosingPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  /* ─── Fetch today's closing report (or compute live if OPEN) ─── */
+  /* ─── Shared: compute a live report from today's raw sales ─── */
+  const fetchLiveSales = useCallback(async () => {
+    const sales = await dailyClosingService.getTodaySales(today);
+    let totalSalesAmount = 0;
+    let totalSalesQuantity = 0;
+    const productMap = {};
+
+    for (const sale of sales) {
+      totalSalesAmount += sale.totalAmount ?? 0;
+      for (const item of sale.items ?? []) {
+        totalSalesQuantity += item.quantity;
+        if (!productMap[item.productId]) {
+          productMap[item.productId] = {
+            id: item.productId,
+            product: item.product,
+            openingStock: null,
+            receivedStock: 0,
+            totalStock: null,
+            soldQuantity: 0,
+            saleAmount: 0,
+            closingStock: null,
+            closingValue: null,
+          };
+        }
+        productMap[item.productId].soldQuantity += item.quantity;
+        productMap[item.productId].saleAmount += item.totalPrice ?? 0;
+      }
+    }
+
+    return {
+      totalSalesAmount,
+      totalSalesQuantity,
+      totalClosingValue: 0,
+      summaries: Object.values(productMap),
+    };
+  }, [today]);
+
+  /* ─── Fetch today's closing report ─── */
   const fetchReport = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await dailyClosingService.getReport(today);
       if (data && data.id) {
-        // Day is already CLOSED or REOPENED — use official data
-        setReport(data);
-        setStatus(data.status);
+        if (data.status === "CLOSED") {
+          // Official closed data — show the snapshot as-is
+          setReport(data);
+          setStatus("CLOSED");
+        } else {
+          // REOPENED — day is active again, show live sales (not the stale snapshot)
+          const liveReport = await fetchLiveSales();
+          setReport(liveReport);
+          setStatus("REOPENED");
+        }
       } else {
         setReport(null);
         setStatus("OPEN");
       }
     } catch (err) {
       if (err?.response?.status === 404) {
-        // Day is OPEN — no DailyClosing record yet, fetch live sales instead
+        // OPEN — no DailyClosing record yet, fetch live sales
         try {
-          const sales = await dailyClosingService.getTodaySales(today);
-
-          // Compute totals + per-product breakdown from raw sales
-          let totalSalesAmount = 0;
-          let totalSalesQuantity = 0;
-          const productMap = {};
-
-          for (const sale of sales) {
-            totalSalesAmount += sale.totalAmount ?? 0;
-            for (const item of sale.items ?? []) {
-              totalSalesQuantity += item.quantity;
-              if (!productMap[item.productId]) {
-                productMap[item.productId] = {
-                  id: item.productId,
-                  product: item.product,
-                  openingStock: null, // only available after close
-                  receivedStock: 0,
-                  totalStock: null,
-                  soldQuantity: 0,
-                  saleAmount: 0,
-                  closingStock: null,
-                  closingValue: null,
-                };
-              }
-              productMap[item.productId].soldQuantity += item.quantity;
-              productMap[item.productId].saleAmount += item.totalPrice ?? 0;
-            }
-          }
-
-          // Build a synthetic "report" object in the same shape DailyClosing uses
-          const liveReport = {
-            totalSalesAmount,
-            totalSalesQuantity,
-            totalClosingValue: 0, // unknown until close
-            summaries: Object.values(productMap),
-          };
-
+          const liveReport = await fetchLiveSales();
           setReport(liveReport);
         } catch {
           setReport(null);
@@ -101,7 +109,7 @@ export default function DailyClosingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [today]);
+  }, [today, fetchLiveSales]);
 
   useEffect(() => {
     fetchReport();
@@ -174,6 +182,7 @@ export default function DailyClosingPage() {
             isAdmin={isAdmin}
             onCloseDay={() => setShowConfirm(true)}
             onReopenDay={handleReopenDay}
+            onDownload={() => dailyClosingService.downloadReport(today)}
           />
         </div>
       )}

@@ -59,7 +59,7 @@ const ClosingProductTable = memo(({ summaries = [] }) => {
               <th className="px-5 py-3 text-center">Received</th>
               <th className="px-5 py-3 text-center">Sold</th>
               <th className="px-5 py-3 text-center">Closing</th>
-              <th className="px-5 py-3 text-right">Sale Amount</th>
+              <th className="px-5 py-3 text-right">Sell Amount</th>
             </tr>
           </thead>
           <tbody>

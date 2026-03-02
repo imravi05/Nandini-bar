@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Lock, Unlock, AlertTriangle } from "lucide-react";
+import { Lock, Unlock, AlertTriangle, Download } from "lucide-react";
 
 const STATUS_CONFIG = {
   OPEN: {
@@ -23,7 +23,7 @@ const STATUS_CONFIG = {
 };
 
 const ClosingActionBar = memo(
-  ({ status, onCloseDay, onReopenDay, isAdmin }) => {
+  ({ status, onCloseDay, onReopenDay, onDownload, isAdmin }) => {
     const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.OPEN;
 
     return (
@@ -70,9 +70,18 @@ const ClosingActionBar = memo(
               Close Day
             </button>
           ) : (
-            <div className="text-sm font-semibold text-slate-400 flex items-center gap-2">
-              <Lock size={14} className="text-red-400" />
-              Day Closed — No further sales allowed
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onDownload}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+              >
+                <Download size={13} />
+                Download Excel
+              </button>
+              <div className="text-sm font-semibold text-slate-400 flex items-center gap-2">
+                <Lock size={14} className="text-red-400" />
+                Day Closed — No further sales allowed
+              </div>
             </div>
           )}
         </div>

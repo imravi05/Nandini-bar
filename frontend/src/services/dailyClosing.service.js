@@ -37,6 +37,23 @@ const dailyClosingService = {
     const res = await api.post("/daily/reopen", { date });
     return res.data;
   },
+
+  /**
+   * GET /api/daily/download?date=YYYY-MM-DD
+   * Fetches the xlsx as a binary blob and triggers a browser download.
+   */
+  downloadReport: async (date) => {
+    const res = await api.get("/daily/download", {
+      params: { date },
+      responseType: "blob",
+    });
+    const url = URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Daily_Report_${date}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 export default dailyClosingService;
