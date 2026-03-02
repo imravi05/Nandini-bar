@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nandini Bar - Sales Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Products</h2>
+            <div id="product-list" class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <p class="text-gray-500">Loading products...</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md h-fit sticky top-8">
+            <h2 class="text-2xl font-bold mb-4">Current Sale</h2>
+            <div id="cart-items" class="space-y-4 mb-6">
+                <p class="text-gray-400 italic">Cart is empty</p>
+            </div>
+            
+            <div class="border-t pt-4">
+                <div class="flex justify-between text-xl font-bold">
+                    <span>Total:</span>
+                    <span id="total-amount">₹0.00</span>
+                </div>
+                <button onclick="processSale()" id="checkout-btn" disabled 
+                    class="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 disabled:bg-gray-300">
+                    Complete Sale
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let cart = [];
+        const API_URL = 'http://localhost:5000/api'; // Change to your backend port
+        const token = localStorage.getItem('token'); // Assumes you logged in
+
+        // 1. Fetch products with inventory
+        async function fetchProducts() {
+            try {
+                const res = await fetch(`${API_URL}/inventory`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                products = result.data;
+                renderProducts();
+            } catch (err) {
+                console.error("Failed to fetch products", err);
+            }
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('product-list');
+            container.innerHTML = products.map(inv => `
+                <div class="border p-4 rounded-lg hover:shadow-md transition">
+                    <h3 class="font-bold text-lg">${inv.product.name}</h3>
+                    <p class="text-gray-600 text-sm">Stock: ${inv.quantity}</p>
+                    <p class="text-blue-600 font-bold mt-2">₹${inv.product.basePrice}</p>
+                    <button onclick="addToCart('${inv.productId}')" 
+                        ${inv.quantity === 0 ? 'disabled' : ''}
+                        class="mt-3 w-full bg-blue-500 text-white py-1 rounded hover:bg-blue-600 disabled:bg-red-300">
+                        ${inv.quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 2. Cart Logic
+        function addToCart(productId) {
+            const item = products.find(p => p.productId === productId);
+            const cartItem = cart.find(c => c.productId === productId);
+
+            if (cartItem) {
+                if (cartItem.quantity < item.quantity) {
+                    cartItem.quantity++;
+                } else {
+                    alert("Not enough stock!");
+                }
+            } else {
+                cart.push({
+                    productId: item.productId,
+                    name: item.product.name,
+                    price: item.product.basePrice,
+                    quantity: 1
+                });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            const totalEl = document.getElementById('total-amount');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 italic">Cart is empty</p>';
+                totalEl.innerText = '₹0.00';
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-xs text-gray-500">₹${item.price} x ${item.quantity}</p>
+                    </div>
+                    <div class="font-bold">₹${(item.price * item.quantity).toFixed(2)}</div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            totalEl.innerText = `₹${total.toFixed(2)}`;
+            checkoutBtn.disabled = false;
+        }
+
+        // 3. Complete Sale (Backend Integration)
+        async function processSale() {
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.disabled = true;
+            checkoutBtn.innerText = "Processing...";
+
+            try {
+                const response = await fetch(`${API_URL}/sales`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ items: cart })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("Sale Successful!");
+                    cart = [];
+                    renderCart();
+                    fetchProducts(); // Refresh stock
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (err) {
+                alert("Transaction Failed!");
+            } finally {
+                checkoutBtn.innerText = "Complete Sale";
+                checkoutBtn.disabled = false;
+            }
+        }
+
+        // Initialize
+        fetchProducts();
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ export const closeDay = async () => {
   });
 
   if (existing) {
+    console.log("Day already closed for date:", today);
     throw new Error("Day already closed");
   }
 
@@ -146,6 +147,7 @@ export const reopenDay = async (date) => {
   }
 
   if (closing.status === "REOPENED") {
+    console.log("Day already reopened for date:", selectedDate);
     throw new Error("Day already reopened");
   }
 

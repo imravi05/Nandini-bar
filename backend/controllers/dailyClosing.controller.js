@@ -3,9 +3,11 @@ import * as dailyService from "../services/dailyClosing.service.js";
 export const closeDay = async (req, res, next) => {
   try {
     const result = await dailyService.closeDay();
+    console.log("Day closed successfully:", result);
     res.json(result);
   } catch (error) {
-    next(error);
+    console.error("Error closing day:", error);
+   // next(error);
   }
 };
 
@@ -25,9 +27,11 @@ export const getDailyReport = async (req, res, next) => {
 
     res.json(report);
   } catch (error) {
-    next(error);
+    console.error("Error fetching daily report:", error);
+    // next(error);
   }
 };
+
 export const reopenDay = async (req, res, next) => {
   try {
     const { date } = req.body;
@@ -40,6 +44,9 @@ export const reopenDay = async (req, res, next) => {
 
     res.json(result);
   } catch (error) {
-    next(error);
+    console.error("Error reopening day:", error);
+    return res.status(400).json({ message: "date is required for reopening the day " });
+    
+   //  next(error);
   }
 };
