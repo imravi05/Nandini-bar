@@ -68,13 +68,18 @@ export const createSale = async (items) => {
       });
     }
 
+    const createdSale = await tx.sale.findUnique({
+      where: { id: sale.id },
+      include: { items: { include: { product: true } } },
+    });
+
     // --- Create Audit Log for the new sale ---
     await tx.auditLog.create({
       data: {
         entityType: "Sale",
         entityId: sale.id,
         action: "CREATE_SALE",
-        newData: JSON.stringify({ ...sale, items }),
+        newData: JSON.stringify(createdSale),
       },
     });
 
@@ -163,7 +168,7 @@ export const getSaleById = async (id) => {
 export const updateSale = async (saleId, newItems) => {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
-    include: { items: true },
+    include: { items: { include: { product: true } } },
   });
 
   if (!sale) throw new Error("Sale not found");
@@ -234,7 +239,7 @@ export const updateSale = async (saleId, newItems) => {
     const updatedSale = await tx.sale.update({
       where: { id: saleId },
       data: { totalAmount },
-      include: { items: true },
+      include: { items: { include: { product: true } } },
     });
 
     // --- Create Audit Log for updated sale ---
@@ -257,7 +262,7 @@ export const updateSale = async (saleId, newItems) => {
 export const deleteSale = async (saleId) => {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
-    include: { items: true },
+    include: { items: { include: { product: true } } },
   });
 
   if (!sale) throw new Error("Sale not found");

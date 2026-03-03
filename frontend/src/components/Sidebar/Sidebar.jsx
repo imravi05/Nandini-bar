@@ -30,20 +30,20 @@ const Sidebar = ({ isMobile, closeMenu }) => {
 
   return (
     <aside
-      className={`w-full md:w-64 bg-slate-900 text-white flex flex-col h-full shadow-xl 
+      className={`w-full md:w-64 bg-black text-white flex flex-col h-full shadow-xl 
       ${isMobile ? "flex" : "hidden md:flex z-20"}
     `}
     >
-      <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+      <div className="p-6 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-500 rounded-xl flex shadow-lg shadow-indigo-500/30 items-center justify-center font-bold text-xl text-white">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-bold text-xl text-black">
             N
           </div>
           <div>
             <h2 className="text-xl font-bold text-white tracking-wide">
               Nandini Bar
             </h2>
-            <p className="text-[10px] text-indigo-300 font-semibold uppercase tracking-wider mt-0.5">
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">
               Management
             </p>
           </div>
@@ -72,8 +72,8 @@ const Sidebar = ({ isMobile, closeMenu }) => {
                 className={({ isActive }) =>
                   `group flex items-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                      ? "bg-gray-800 text-white"
+                      : "text-gray-400 hover:bg-gray-900 hover:text-white"
                   }`
                 }
               >
@@ -95,10 +95,9 @@ const Sidebar = ({ isMobile, closeMenu }) => {
           })}
       </nav>
 
-      <div className="p-4 border-t border-slate-800 mt-auto">
-        <div className="bg-slate-800/60 p-4 rounded-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
-          <p className="text-sm font-semibold text-slate-200">System Status</p>
+      <div className="p-4 border-t border-gray-800 mt-auto">
+        <div className="bg-gray-900 p-4 rounded-xl relative overflow-hidden">
+          <p className="text-sm font-semibold text-white">System Status</p>
           <div className="flex items-center gap-2 mt-2">
             <div className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
