@@ -7,7 +7,7 @@ export const createSale = async (items) => {
   today.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
-    where: { date: today }
+    where: { date: today },
   });
 
   if (closing && closing.status === "CLOSED") {
@@ -19,7 +19,7 @@ export const createSale = async (items) => {
 
     for (const item of items) {
       const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId }
+        where: { productId: item.productId },
       });
 
       if (!inventory || inventory.quantity < item.quantity) {
@@ -27,7 +27,7 @@ export const createSale = async (items) => {
       }
 
       const product = await tx.product.findUnique({
-        where: { id: item.productId }
+        where: { id: item.productId },
       });
 
       if (!product) {
@@ -41,13 +41,13 @@ export const createSale = async (items) => {
       data: {
         saleNumber: `SALE-${Date.now()}`,
         totalAmount,
-        status: "OPEN"
-      }
+        status: "OPEN",
+      },
     });
 
     for (const item of items) {
       const product = await tx.product.findUnique({
-        where: { id: item.productId }
+        where: { id: item.productId },
       });
 
       await tx.saleItem.create({
@@ -56,17 +56,27 @@ export const createSale = async (items) => {
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice
-        }
+          totalPrice: item.quantity * product.basePrice,
+        },
       });
 
       await tx.shopInventory.updateMany({
         where: { productId: item.productId },
         data: {
-          quantity: { decrement: item.quantity }
-        }
-      });   
+          quantity: { decrement: item.quantity },
+        },
+      });
     }
+
+    // --- Create Audit Log for the new sale ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Sale",
+        entityId: sale.id,
+        action: "CREATE_SALE",
+        newData: JSON.stringify({ ...sale, items }),
+      },
+    });
 
     return sale;
   });
@@ -84,22 +94,22 @@ export const getSales = async (query) => {
   if (query.startDate && query.endDate) {
     filters.saleDate = {
       gte: new Date(query.startDate),
-      lte: new Date(query.endDate)
+      lte: new Date(query.endDate),
     };
   }
 
   if (query.minAmount && query.maxAmount) {
     filters.totalAmount = {
       gte: parseFloat(query.minAmount),
-      lte: parseFloat(query.maxAmount)
+      lte: parseFloat(query.maxAmount),
     };
   }
 
   if (query.productId) {
     filters.items = {
       some: {
-        productId: query.productId
-      }
+        productId: query.productId,
+      },
     };
   }
 
@@ -108,14 +118,14 @@ export const getSales = async (query) => {
       where: filters,
       include: {
         items: {
-          include: { product: true }
-        }
+          include: { product: true },
+        },
       },
       orderBy: { saleDate: "desc" },
       skip,
-      take: limit
+      take: limit,
     }),
-    prisma.sale.count({ where: filters })
+    prisma.sale.count({ where: filters }),
   ]);
 
   return {
@@ -124,8 +134,8 @@ export const getSales = async (query) => {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
-    }
+      totalPages: Math.ceil(total / limit),
+    },
   };
 };
 
@@ -136,9 +146,9 @@ export const getSaleById = async (id) => {
     where: { id },
     include: {
       items: {
-        include: { product: true }
-      }
-    }
+        include: { product: true },
+      },
+    },
   });
 
   if (!sale) {
@@ -153,7 +163,7 @@ export const getSaleById = async (id) => {
 export const updateSale = async (saleId, newItems) => {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
-    include: { items: true }
+    include: { items: true },
   });
 
   if (!sale) throw new Error("Sale not found");
@@ -162,7 +172,7 @@ export const updateSale = async (saleId, newItems) => {
   saleDate.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
-    where: { date: saleDate }
+    where: { date: saleDate },
   });
 
   if (closing && closing.status === "CLOSED") {
@@ -175,14 +185,14 @@ export const updateSale = async (saleId, newItems) => {
       await tx.shopInventory.updateMany({
         where: { productId: item.productId },
         data: {
-          quantity: { increment: item.quantity }
-        }
+          quantity: { increment: item.quantity },
+        },
       });
     }
 
     // Delete old items
     await tx.saleItem.deleteMany({
-      where: { saleId }
+      where: { saleId },
     });
 
     let totalAmount = 0;
@@ -190,7 +200,7 @@ export const updateSale = async (saleId, newItems) => {
     // Create new items
     for (const item of newItems) {
       const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId }
+        where: { productId: item.productId },
       });
 
       if (!inventory || inventory.quantity < item.quantity) {
@@ -198,7 +208,7 @@ export const updateSale = async (saleId, newItems) => {
       }
 
       const product = await tx.product.findUnique({
-        where: { id: item.productId }
+        where: { id: item.productId },
       });
 
       totalAmount += item.quantity * product.basePrice;
@@ -209,21 +219,21 @@ export const updateSale = async (saleId, newItems) => {
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice
-        }
+          totalPrice: item.quantity * product.basePrice,
+        },
       });
 
       await tx.shopInventory.updateMany({
         where: { productId: item.productId },
         data: {
-          quantity: { decrement: item.quantity }
-        }
+          quantity: { decrement: item.quantity },
+        },
       });
     }
 
     return tx.sale.update({
       where: { id: saleId },
-      data: { totalAmount }
+      data: { totalAmount },
     });
   });
 };
@@ -233,7 +243,7 @@ export const updateSale = async (saleId, newItems) => {
 export const deleteSale = async (saleId) => {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
-    include: { items: true }
+    include: { items: true },
   });
 
   if (!sale) throw new Error("Sale not found");
@@ -242,7 +252,7 @@ export const deleteSale = async (saleId) => {
   saleDate.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
-    where: { date: saleDate }
+    where: { date: saleDate },
   });
 
   if (closing && closing.status === "CLOSED") {
@@ -254,17 +264,17 @@ export const deleteSale = async (saleId) => {
       await tx.shopInventory.updateMany({
         where: { productId: item.productId },
         data: {
-          quantity: { increment: item.quantity }
-        }
+          quantity: { increment: item.quantity },
+        },
       });
     }
 
     await tx.saleItem.deleteMany({
-      where: { saleId }
+      where: { saleId },
     });
 
     await tx.sale.delete({
-      where: { id: saleId }
+      where: { id: saleId },
     });
 
     return { message: "Sale deleted and stock restored" };
