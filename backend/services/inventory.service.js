@@ -11,31 +11,43 @@ export const getInventory = async () => {
 /**
  * Increments stock and logs a RESTOCK event.
  */
-export const restockInventory = async (productId, quantity, costPrice, reason = "Supplier Restock") => {
+export const restockInventory = async (
+  productId,
+  quantity,
+  costPrice,
+  reason = "Supplier Restock",
+) => {
   if (quantity <= 0) throw new Error("Restock quantity must be positive");
 
   // Check Daily Closing status
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const closing = await prisma.dailyClosing.findUnique({ where: { date: today } });
+  const closing = await prisma.dailyClosing.findUnique({
+    where: { date: today },
+  });
   if (closing && closing.status === "CLOSED") {
     throw new Error("Cannot restock after daily closing.");
   }
 
   return prisma.$transaction(async (tx) => {
+    // Get old inventory snapshot for audit log
+    const oldInventory = await tx.shopInventory.findUnique({
+      where: { productId },
+    });
+
     // 1. Update or Create Inventory (Upsert prevents "not found" errors)
     const inventory = await tx.shopInventory.upsert({
       where: { productId },
       update: {
         quantity: { increment: quantity },
         costPrice: costPrice || undefined, // Update cost price if provided
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       },
       create: {
         productId,
         quantity,
-        costPrice: costPrice || 0
-      }
+        costPrice: costPrice || 0,
+      },
     });
 
     // 2. Create Audit Trail
@@ -45,8 +57,19 @@ export const restockInventory = async (productId, quantity, costPrice, reason = 
         changeQty: quantity,
         type: "RESTOCK",
         reason,
-        costPrice: costPrice || 0
-      }
+        costPrice: costPrice || 0,
+      },
+    });
+
+    // --- Create Audit Log for restock ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Inventory",
+        entityId: inventory.id,
+        action: "RESTOCK_INVENTORY",
+        oldData: oldInventory ? JSON.stringify(oldInventory) : null,
+        newData: JSON.stringify(inventory),
+      },
     });
 
     return inventory;
@@ -55,14 +78,16 @@ export const restockInventory = async (productId, quantity, costPrice, reason = 
 
 /* ---------------- ADJUST INVENTORY (Manual Correction) ---------------- */
 /**
- * Used for damages, losses, or manual fixes. 
+ * Used for damages, losses, or manual fixes.
  * Allows negative changeQty for stock reduction.
  */
 export const adjustInventory = async (productId, changeQty, reason) => {
   if (changeQty === 0) throw new Error("Adjustment cannot be zero");
 
   return prisma.$transaction(async (tx) => {
-    const inventory = await tx.shopInventory.findUnique({ where: { productId } });
+    const inventory = await tx.shopInventory.findUnique({
+      where: { productId },
+    });
     if (!inventory) throw new Error("Inventory record not found");
 
     if (inventory.quantity + changeQty < 0) {
@@ -74,14 +99,27 @@ export const adjustInventory = async (productId, changeQty, reason) => {
         productId,
         changeQty,
         type: "MANUAL_ADJUSTMENT",
-        reason
-      }
+        reason,
+      },
     });
 
-    return tx.shopInventory.update({
+    const updatedInventory = await tx.shopInventory.update({
       where: { productId },
-      data: { quantity: { increment: changeQty } }
+      data: { quantity: { increment: changeQty } },
     });
+
+    // --- Create Audit Log for manual adjustment ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Inventory",
+        entityId: inventory.id,
+        action: "ADJUST_INVENTORY",
+        oldData: JSON.stringify(inventory),
+        newData: JSON.stringify(updatedInventory),
+      },
+    });
+
+    return updatedInventory;
   });
 };
 
