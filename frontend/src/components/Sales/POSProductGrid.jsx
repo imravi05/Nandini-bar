@@ -125,7 +125,7 @@ const POSProductGrid = ({ inventory, onAdd }) => {
 
       {/* Product grid — scrollable */}
       <div className="overflow-y-auto flex-1 pr-1">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3">
           {filtered.length === 0 && (
             <p className="col-span-full text-center text-slate-400 py-10 text-sm">
               No products found.
@@ -150,7 +150,7 @@ const POSProductGrid = ({ inventory, onAdd }) => {
                     stock: inv.quantity,
                   })
                 }
-                className={`relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 text-center transition-all select-none ${
+                className={`relative flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-2xl border-2 text-center transition-all select-none ${
                   outOfStock
                     ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200"
                     : `${color.bg} ${color.border} hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer`
@@ -158,7 +158,7 @@ const POSProductGrid = ({ inventory, onAdd }) => {
               >
                 {/* Initials avatar */}
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${color.dot}`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white ${color.dot}`}
                 >
                   {getInitials(product?.name)}
                 </div>
@@ -174,7 +174,7 @@ const POSProductGrid = ({ inventory, onAdd }) => {
                   </p>
                 </div>
 
-                <p className="text-sm font-extrabold text-slate-800">
+                <p className="text-xs font-extrabold text-slate-800">
                   ₹{product?.basePrice?.toFixed(0)}
                 </p>
 
