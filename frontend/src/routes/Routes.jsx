@@ -15,6 +15,7 @@ import Products from "../pages/Products";
 import InventoryPage from "../pages/Inventory/InventoryPage";
 import SalesPage from "../pages/Sales/SalesPage";
 import DailyClosingPage from "../pages/DailyClosing/DailyClosingPage";
+import AuditLogsPage from "../pages/AuditLogs/AuditLogsPage";
 
 export default function AppRoutes() {
   return (
@@ -48,6 +49,7 @@ export default function AppRoutes() {
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/sales" element={<SalesPage />} />
           <Route path="/daily" element={<DailyClosingPage />} />
+          <Route path="/audit" element={<AuditLogsPage />} />
         </Route>
       </Route>
 
