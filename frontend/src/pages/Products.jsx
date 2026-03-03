@@ -6,6 +6,8 @@ import { Plus, X, Search } from "lucide-react";
 import SearchableDropdown from "../components/Form/SearchableDropdown";
 import productData from "../../data.json";
 import { LayoutGrid } from "lucide-react";
+import authService from "../services/auth.service";
+import { canPerformAction, ROLES } from "../config/roles";
 
 // Derive unique, sorted lists from dat.json
 const PREDEFINED_PRODUCT_NAMES = [
@@ -20,6 +22,10 @@ export default function Products() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+
+  const user = authService.getCurrentUser();
+  const userRole = user?.role || ROLES.CASHIER;
+  const canDeleteProduct = canPerformAction(userRole, "DELETE_PRODUCT");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -272,7 +278,7 @@ export default function Products() {
           })}
           isLoading={isLoading}
           onEdit={handleEditProduct}
-          onDelete={handleDeleteProduct}
+          onDelete={canDeleteProduct ? handleDeleteProduct : undefined}
         />
       </div>
 

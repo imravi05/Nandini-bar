@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import authService from "../services/auth.service";
+import { ROLE_ROUTES, normalizeRole } from "../config/roles";
 
 /**
  * Used to wrap pages like Login and Register.
@@ -11,7 +12,9 @@ export default function PublicRoutes() {
 
   // If already logged in, redirect to main application
   if (user && user.token) {
-    return <Navigate to="/" replace />;
+    const validRole = normalizeRole(user.role);
+    const fallback = ROLE_ROUTES[validRole]?.[0] || "/";
+    return <Navigate to={fallback} replace />;
   }
 
   // Otherwise, render requested public route

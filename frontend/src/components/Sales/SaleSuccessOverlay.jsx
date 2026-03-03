@@ -3,7 +3,13 @@ import { CheckCircle, RotateCcw, X } from "lucide-react";
 import salesService from "../../services/sales.service";
 import toast from "react-hot-toast";
 
+import authService from "../../services/auth.service";
+import { canPerformAction, ROLES } from "../../config/roles";
+
 const SaleSuccessOverlay = ({ sale, onClose, onUndoComplete }) => {
+  const user = authService.getCurrentUser();
+  const userRole = user?.role || ROLES.CASHIER;
+  const canVoid = canPerformAction(userRole, "VOID_SALE");
   const [isUndoing, setIsUndoing] = useState(false);
 
   const handleUndo = async () => {
@@ -51,24 +57,25 @@ const SaleSuccessOverlay = ({ sale, onClose, onUndoComplete }) => {
           ₹{sale.totalAmount?.toFixed(0)}
         </p>
 
-        {/* Undo button */}
-        <button
-          onClick={handleUndo}
-          disabled={isUndoing}
-          className="w-full py-3 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 flex items-center justify-center gap-2 transition disabled:opacity-40"
-        >
-          {isUndoing ? (
-            <>
-              <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
-              Reversing sale...
-            </>
-          ) : (
-            <>
-              <RotateCcw size={15} />
-              Undo Sale (Customer Cancelled)
-            </>
-          )}
-        </button>
+        {canVoid && (
+          <button
+            onClick={handleUndo}
+            disabled={isUndoing}
+            className="w-full py-3 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 flex items-center justify-center gap-2 transition disabled:opacity-40 mt-6"
+          >
+            {isUndoing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
+                Reversing sale...
+              </>
+            ) : (
+              <>
+                <RotateCcw size={15} />
+                Undo Sale (Customer Cancelled)
+              </>
+            )}
+          </button>
+        )}
 
         <p className="text-[10px] text-slate-400 mt-3">
           Tap anywhere outside to dismiss and start next order

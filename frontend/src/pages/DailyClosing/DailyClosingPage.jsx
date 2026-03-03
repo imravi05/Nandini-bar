@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 import dailyClosingService from "../../services/dailyClosing.service";
 import authService from "../../services/auth.service";
+import { canPerformAction, ROLES } from "../../config/roles";
 
 import ClosingStatCards from "../../components/DailyClosing/ClosingStatCards";
 import ClosingProductTable from "../../components/DailyClosing/ClosingProductTable";
@@ -26,7 +27,8 @@ export default function DailyClosingPage() {
   const today = toLocalDateStr();
   const dateLabel = formatDateLabel();
   const user = authService.getCurrentUser();
-  const isAdmin = user?.role === "ADMIN";
+  const userRole = user?.role || ROLES.CASHIER;
+  const canReopen = canPerformAction(userRole, "REOPEN_DAY");
 
   const [report, setReport] = useState(null); // DailyClosing | null
   const [status, setStatus] = useState("OPEN"); // OPEN | CLOSED | REOPENED
@@ -179,7 +181,7 @@ export default function DailyClosingPage() {
           {/* Action bar — always visible at bottom */}
           <ClosingActionBar
             status={status}
-            isAdmin={isAdmin}
+            isAdmin={canReopen}
             onCloseDay={() => setShowConfirm(true)}
             onReopenDay={handleReopenDay}
             onDownload={() => dailyClosingService.downloadReport(today)}
