@@ -23,7 +23,8 @@ export const ROLE_ACTIONS = {
   [ROLES.ADMIN]: ["VOID_SALE", "DELETE_PRODUCT", "REOPEN_DAY", "EDIT_PRICE"],
   [ROLES.INVENTORY]: ["VOID_SALE", "EDIT_PRICE"],
   [ROLES.CASHIER]: [
-    // Cashier cannot do any of the above sensitive actions
+    "VOID_SALE",
+    // Cashier cannot do other sensitive actions
   ],
 };
 
