@@ -107,6 +107,16 @@ export const closeDay = async () => {
       include: { summaries: { include: { product: true } } },
     });
 
+    // --- Create Audit Log for daily closing ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "DailyClosing",
+        entityId: fullClosing.id,
+        action: "CLOSE_DAY",
+        newData: JSON.stringify(fullClosing),
+      },
+    });
+
     setImmediate(async () => {
       await generateDailyExcel(fullClosing);
     });
@@ -135,24 +145,39 @@ export const reopenDay = async (date) => {
   const selectedDate = new Date(date);
   selectedDate.setHours(0, 0, 0, 0);
 
-  const closing = await prisma.dailyClosing.findUnique({
-    where: { date: selectedDate },
-  });
+  return prisma.$transaction(async (tx) => {
+    const closing = await tx.dailyClosing.findUnique({
+      where: { date: selectedDate },
+    });
 
-  if (!closing) {
-    throw new Error("No closing found for this date");
-  }
+    if (!closing) {
+      throw new Error("No closing found for this date");
+    }
 
-  if (closing.status === "REOPENED") {
-    console.log("Day already reopened for date:", selectedDate);
-    throw new Error("Day already reopened");
-  }
+    if (closing.status === "REOPENED") {
+      console.log("Day already reopened for date:", selectedDate);
+      throw new Error("Day already reopened");
+    }
 
-  return prisma.dailyClosing.update({
-    where: { date: selectedDate },
-    data: {
-      status: "REOPENED",
-      revisionNumber: closing.revisionNumber + 1,
-    },
+    const updatedClosing = await tx.dailyClosing.update({
+      where: { date: selectedDate },
+      data: {
+        status: "REOPENED",
+        revisionNumber: closing.revisionNumber + 1,
+      },
+    });
+
+    // --- Create Audit Log for reopening day ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "DailyClosing",
+        entityId: updatedClosing.id,
+        action: "REOPEN_DAY",
+        oldData: JSON.stringify(closing),
+        newData: JSON.stringify(updatedClosing),
+      },
+    });
+
+    return updatedClosing;
   });
 };

@@ -33,6 +33,7 @@ export const restockInventory = async (
     // Get old inventory snapshot for audit log
     const oldInventory = await tx.shopInventory.findUnique({
       where: { productId },
+      include: { product: true },
     });
 
     // 1. Update or Create Inventory (Upsert prevents "not found" errors)
@@ -48,6 +49,7 @@ export const restockInventory = async (
         quantity,
         costPrice: costPrice || 0,
       },
+      include: { product: true },
     });
 
     // 2. Create Audit Trail
@@ -87,6 +89,7 @@ export const adjustInventory = async (productId, changeQty, reason) => {
   return prisma.$transaction(async (tx) => {
     const inventory = await tx.shopInventory.findUnique({
       where: { productId },
+      include: { product: true },
     });
     if (!inventory) throw new Error("Inventory record not found");
 
@@ -106,6 +109,7 @@ export const adjustInventory = async (productId, changeQty, reason) => {
     const updatedInventory = await tx.shopInventory.update({
       where: { productId },
       data: { quantity: { increment: changeQty } },
+      include: { product: true },
     });
 
     // --- Create Audit Log for manual adjustment ---
