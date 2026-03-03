@@ -87,7 +87,7 @@ export const closeDay = async () => {
           dailyClosingId: closingId,
           productId: inv.productId,
           openingStock: inv.quantity + soldData.soldQuantity,
-          receivedStock: 0,
+          receivedStock: inv.receivedQuantity, // Assuming receivedQuantity is tracked in shopInventory for the day
           totalStock: inv.quantity + soldData.soldQuantity,
           soldQuantity: soldData.soldQuantity,
           saleAmount: soldData.saleAmount,

@@ -1,0 +1,30 @@
+{
+  "name": "nadinin-bar",
+  "version": "1.0.0",
+  "description": "Nandini Bar is a desktop application built using Electron, React, and Prisma. It serves as a comprehensive management tool for bar owners, providing features such as inventory management, sales tracking, employee scheduling, and customer relationship management. The application is designed to streamline operations and enhance the overall efficiency of bar management.",
+  "main": "electron/main.js",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "electron": "wait-on http://localhost:5173 && electron .",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run electron\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imravi05/Nandini-bar.git"
+  },
+  "keywords": [],
+  "author": "Ravi Shinde  and Vinay Vyas",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/imravi05/Nandini-bar/issues"
+  },
+  "homepage": "https://github.com/imravi05/Nandini-bar#readme",
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.3.1",
+    "electron": "^40.6.1",
+    "wait-on": "^9.0.4"
+  }
+}

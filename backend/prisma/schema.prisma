@@ -128,3 +128,4 @@ model User {
 
   @@index([email])
 }
+
