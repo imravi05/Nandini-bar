@@ -47,7 +47,10 @@ const formatValue = (key, val) => {
     });
   }
 
-  if (typeof val === "object") return JSON.stringify(val);
+  if (typeof val === "object") {
+    if (val.name) return val.name; // Smart extract of nested objects
+    return JSON.stringify(val);
+  }
   return String(val);
 };
 
@@ -57,6 +60,8 @@ export const getReadableRef = (log) => {
     return `Receipt ${data.saleNumber}`;
   if (log.entityType === "Product" && data.name)
     return `${data.name} (${data.category})`;
+  if (log.entityType === "Inventory" && data.product?.name)
+    return `${data.product.name} Stock`;
   if (log.entityType === "DailyClosing" && data.date) {
     return `Closing for ${new Date(data.date).toLocaleDateString("en-IN")}`;
   }

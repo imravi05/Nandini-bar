@@ -6,7 +6,6 @@ const ENTITY_TYPES = [
   { value: "Product", label: "Products" },
   { value: "Sale", label: "Sales" },
   { value: "Inventory", label: "Inventory" },
-  { value: "User", label: "Users" },
   { value: "DailyClosing", label: "Daily Closing" },
 ];
 
