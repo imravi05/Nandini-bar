@@ -32,7 +32,16 @@ const KEY_LABELS = {
 
 const formatValue = (key, val) => {
   if (val === null || val === undefined) return "—";
-  if (key === "items" && Array.isArray(val)) return `${val.length} item(s)`;
+
+  if (key === "items" && Array.isArray(val)) {
+    return val
+      .map((item) => {
+        const qty = item.quantity || 0;
+        const name = item.product?.name || item.name || "Item";
+        return `${qty}x ${name}`;
+      })
+      .join(", ");
+  }
 
   if (
     typeof val === "string" &&
