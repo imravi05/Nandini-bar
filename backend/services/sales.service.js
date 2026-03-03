@@ -231,10 +231,24 @@ export const updateSale = async (saleId, newItems) => {
       });
     }
 
-    return tx.sale.update({
+    const updatedSale = await tx.sale.update({
       where: { id: saleId },
       data: { totalAmount },
+      include: { items: true },
     });
+
+    // --- Create Audit Log for updated sale ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Sale",
+        entityId: sale.id,
+        action: "UPDATE_SALE",
+        oldData: JSON.stringify(sale),
+        newData: JSON.stringify(updatedSale),
+      },
+    });
+
+    return updatedSale;
   });
 };
 
@@ -275,6 +289,16 @@ export const deleteSale = async (saleId) => {
 
     await tx.sale.delete({
       where: { id: saleId },
+    });
+
+    // --- Create Audit Log for voided sale ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Sale",
+        entityId: sale.id,
+        action: "VOID_SALE",
+        oldData: JSON.stringify(sale),
+      },
     });
 
     return { message: "Sale deleted and stock restored" };
