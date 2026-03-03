@@ -17,6 +17,19 @@ export const createProduct = async (productData) => {
       },
     });
 
+    // --- Create Audit Log for new product ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Product",
+        entityId: product.id,
+        action: "CREATE_PRODUCT",
+        newData: JSON.stringify({
+          ...product,
+          initialStock: Number(stockQty) || 0,
+        }),
+      },
+    });
+
     return product;
   });
 };
@@ -75,9 +88,27 @@ export const getProductById = async (id) => {
 /* ---------------- UPDATE PRODUCT ---------------- */
 
 export const updateProduct = async (id, data) => {
-  return prisma.product.update({
-    where: { id },
-    data,
+  return prisma.$transaction(async (tx) => {
+    const oldProduct = await tx.product.findUnique({ where: { id } });
+    if (!oldProduct) throw new Error("Product not found");
+
+    const updatedProduct = await tx.product.update({
+      where: { id },
+      data,
+    });
+
+    // --- Create Audit Log for product update ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Product",
+        entityId: id,
+        action: "UPDATE_PRODUCT",
+        oldData: JSON.stringify(oldProduct),
+        newData: JSON.stringify(updatedProduct),
+      },
+    });
+
+    return updatedProduct;
   });
 };
 
@@ -109,6 +140,18 @@ export const deleteProduct = async (id) => {
 
   return prisma.$transaction(async (tx) => {
     await tx.shopInventory.deleteMany({ where: { productId: id } });
-    return tx.product.delete({ where: { id } });
+    const deletedProduct = await tx.product.delete({ where: { id } });
+
+    // --- Create Audit Log for product deletion ---
+    await tx.auditLog.create({
+      data: {
+        entityType: "Product",
+        entityId: id,
+        action: "DELETE_PRODUCT",
+        oldData: JSON.stringify(product),
+      },
+    });
+
+    return deletedProduct;
   });
 };
