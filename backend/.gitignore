@@ -1,7 +1,8 @@
 node_modules/
 reports/
 .env
-dev.db
 
 prisma/dev.db
 prisma/dev.db-journal
+*.db
+*.db-journal
