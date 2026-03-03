@@ -38,7 +38,9 @@ const Navbar = ({ onMenuClick }) => {
               {user?.name || "Employee"}
             </p>
             <p className="text-[10px] font-bold text-indigo-600 tracking-wider uppercase bg-indigo-50 rounded-full px-2 py-0.5 inline-block">
-              {user?.role || "USER"}
+              {user?.role === "INVENTORY"
+                ? "INVENTORY MANAGER"
+                : user?.role || "USER"}
             </p>
           </div>
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex justify-center items-center text-white shadow-md border-2 border-white shrink-0">
