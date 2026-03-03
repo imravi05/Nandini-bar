@@ -11,7 +11,13 @@ import {
   ShoppingCart,
 } from "lucide-react";
 
+import authService from "../../services/auth.service";
+import { canAccessRoute } from "../../config/roles";
+
 const Sidebar = ({ isMobile, closeMenu }) => {
+  const user = authService.getCurrentUser();
+  const userRole = user?.role || "CASHIER"; // Fallback to safe role
+
   const menuItems = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Products", path: "/products", icon: Package },
@@ -54,37 +60,39 @@ const Sidebar = ({ isMobile, closeMenu }) => {
       </div>
 
       <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              onClick={isMobile ? closeMenu : undefined}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon
-                    size={20}
-                    className={
-                      isActive
-                        ? "text-white"
-                        : "text-slate-500 group-hover:text-slate-300 transition-colors"
-                    }
-                  />
-                  {item.name}
-                </>
-              )}
-            </NavLink>
-          );
-        })}
+        {menuItems
+          .filter((item) => canAccessRoute(userRole, item.path))
+          .map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                onClick={isMobile ? closeMenu : undefined}
+                className={({ isActive }) =>
+                  `group flex items-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                      : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      size={20}
+                      className={
+                        isActive
+                          ? "text-white"
+                          : "text-slate-500 group-hover:text-slate-300 transition-colors"
+                      }
+                    />
+                    {item.name}
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
       </nav>
 
       <div className="p-4 border-t border-slate-800 mt-auto">
