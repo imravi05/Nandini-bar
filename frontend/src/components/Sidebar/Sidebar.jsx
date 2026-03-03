@@ -19,7 +19,7 @@ const Sidebar = ({ isMobile, closeMenu }) => {
     { name: "Sales", path: "/sales", icon: ShoppingCart },
     { name: "Daily Closing", path: "/daily", icon: FileText },
     { name: "Audit Logs", path: "/audit", icon: History },
-    { name: "Staff Management", path: "/users", icon: Users },
+    // { name: "Staff Management", path: "/users", icon: Users },
   ];
 
   return (
