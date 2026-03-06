@@ -23,6 +23,7 @@ model Product {
   saleItems   SaleItem[]
   dailySummaries  DailyProductSummary[]
   stockAdjustments StockAdjustment[]
+  
 }
 
 model ShopInventory {
@@ -99,7 +100,6 @@ model DailyProductSummary {
   saleAmount      Float
   closingStock    Int
   closingValue    Float
-
   dailyClosing    DailyClosing @relation(fields: [dailyClosingId], references: [id])
   product         Product      @relation(fields: [productId], references: [id])
 

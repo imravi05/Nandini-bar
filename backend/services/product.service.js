@@ -152,6 +152,7 @@ export const deleteProduct = async (id) => {
       },
     });
 
+
     return deletedProduct;
   });
 };

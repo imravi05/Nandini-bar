@@ -5,7 +5,10 @@ export const closeDay = async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Only block if genuinely already CLOSED; REOPENED days can be re-closed
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  // Check existing closing
   const existing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
@@ -15,9 +18,16 @@ export const closeDay = async () => {
   }
 
   return prisma.$transaction(async (tx) => {
-    // Gather today's sales
+
+    /* ---------------- FETCH TODAY SALES ---------------- */
+
     const sales = await tx.sale.findMany({
-      where: { saleDate: { gte: today } },
+      where: {
+        saleDate: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
       include: { items: true },
     });
 
@@ -27,15 +37,23 @@ export const closeDay = async () => {
 
     for (const sale of sales) {
       totalSalesAmount += sale.totalAmount;
+
       for (const item of sale.items) {
         totalSalesQuantity += item.quantity;
+
         if (!productMap[item.productId]) {
-          productMap[item.productId] = { soldQuantity: 0, saleAmount: 0 };
+          productMap[item.productId] = {
+            soldQuantity: 0,
+            saleAmount: 0,
+          };
         }
+
         productMap[item.productId].soldQuantity += item.quantity;
         productMap[item.productId].saleAmount += item.totalPrice;
       }
     }
+
+    /* ---------------- FETCH INVENTORY ---------------- */
 
     const inventories = await tx.shopInventory.findMany({
       include: { product: true },
@@ -44,12 +62,15 @@ export const closeDay = async () => {
     let totalClosingValue = 0;
     let closingId;
 
+    /* ---------------- CREATE OR UPDATE CLOSING ---------------- */
+
     if (existing) {
-      // REOPENED — wipe old summaries and update the record
+      // Day was reopened earlier
       await tx.dailyProductSummary.deleteMany({
         where: { dailyClosingId: existing.id },
       });
-      await tx.dailyClosing.update({
+
+      const updated = await tx.dailyClosing.update({
         where: { id: existing.id },
         data: {
           totalSalesAmount,
@@ -59,9 +80,10 @@ export const closeDay = async () => {
           revisionNumber: existing.revisionNumber + 1,
         },
       });
-      closingId = existing.id;
+
+      closingId = updated.id;
     } else {
-      // First close of the day
+
       const closing = await tx.dailyClosing.create({
         data: {
           date: today,
@@ -71,14 +93,25 @@ export const closeDay = async () => {
           status: "CLOSED",
         },
       });
+
       closingId = closing.id;
     }
 
+    /* ---------------- PRODUCT LEVEL SUMMARY ---------------- */
+
     for (const inv of inventories) {
+
+      // Defensive check (important)
+      if (!inv.product) {
+        console.warn("Skipping inventory without product:", inv.productId);
+        continue;
+      }
+
       const soldData = productMap[inv.productId] || {
         soldQuantity: 0,
         saleAmount: 0,
       };
+
       const closingValue = inv.quantity * inv.product.basePrice;
       totalClosingValue += closingValue;
 
@@ -86,28 +119,43 @@ export const closeDay = async () => {
         data: {
           dailyClosingId: closingId,
           productId: inv.productId,
+
           openingStock: inv.quantity + soldData.soldQuantity,
-          receivedStock: inv.receivedQuantity, // Assuming receivedQuantity is tracked in shopInventory for the day
+
+          // since purchase module not implemented
+          receivedStock: 0,
+
           totalStock: inv.quantity + soldData.soldQuantity,
+
           soldQuantity: soldData.soldQuantity,
           saleAmount: soldData.saleAmount,
+
           closingStock: inv.quantity,
           closingValue,
         },
       });
     }
 
+    /* ---------------- UPDATE TOTAL CLOSING VALUE ---------------- */
+
     await tx.dailyClosing.update({
       where: { id: closingId },
       data: { totalClosingValue },
     });
 
+    /* ---------------- FETCH FULL REPORT ---------------- */
+
     const fullClosing = await tx.dailyClosing.findUnique({
       where: { id: closingId },
-      include: { summaries: { include: { product: true } } },
+      include: {
+        summaries: {
+          include: { product: true },
+        },
+      },
     });
 
-    // --- Create Audit Log for daily closing ---
+    /* ---------------- AUDIT LOG ---------------- */
+
     await tx.auditLog.create({
       data: {
         entityType: "DailyClosing",
@@ -117,6 +165,8 @@ export const closeDay = async () => {
       },
     });
 
+    /* ---------------- GENERATE EXCEL ---------------- */
+
     setImmediate(async () => {
       await generateDailyExcel(fullClosing);
     });
@@ -125,7 +175,13 @@ export const closeDay = async () => {
   });
 };
 
+
+/* ------------------------------------------------ */
+/* GET DAILY REPORT */
+/* ------------------------------------------------ */
+
 export const getDailyReport = async (date) => {
+
   const selectedDate = new Date(date);
   selectedDate.setHours(0, 0, 0, 0);
 
@@ -133,19 +189,24 @@ export const getDailyReport = async (date) => {
     where: { date: selectedDate },
     include: {
       summaries: {
-        include: {
-          product: true,
-        },
+        include: { product: true },
       },
     },
   });
 };
 
+
+/* ------------------------------------------------ */
+/* REOPEN DAY */
+/* ------------------------------------------------ */
+
 export const reopenDay = async (date) => {
+
   const selectedDate = new Date(date);
   selectedDate.setHours(0, 0, 0, 0);
 
   return prisma.$transaction(async (tx) => {
+
     const closing = await tx.dailyClosing.findUnique({
       where: { date: selectedDate },
     });
@@ -155,7 +216,6 @@ export const reopenDay = async (date) => {
     }
 
     if (closing.status === "REOPENED") {
-      console.log("Day already reopened for date:", selectedDate);
       throw new Error("Day already reopened");
     }
 
@@ -167,7 +227,6 @@ export const reopenDay = async (date) => {
       },
     });
 
-    // --- Create Audit Log for reopening day ---
     await tx.auditLog.create({
       data: {
         entityType: "DailyClosing",

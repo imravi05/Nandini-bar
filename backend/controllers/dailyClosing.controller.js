@@ -8,6 +8,7 @@ export const closeDay = async (req, res, next) => {
     const result = await dailyService.closeDay();
     res.json(result);
   } catch (error) {
+   // console.error("Error in closeDay controller:", error);
     next(error);
   }
 };

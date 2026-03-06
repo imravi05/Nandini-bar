@@ -25,7 +25,7 @@ export const restockInventory = async (
   const closing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
-  if (closing && closing.status === "CLOSED") {
+  if (closing?.status === "CLOSED") {
     throw new Error("Cannot restock after daily closing.");
   }
 
