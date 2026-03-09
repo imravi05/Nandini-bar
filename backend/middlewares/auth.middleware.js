@@ -5,10 +5,10 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export const authenticate = (req, res, next) => {
   // Add this bypass line
   // remember to remove this in production or set NODE_ENC to production in your .en
-  if (process.env.NODE_ENV === "development") {
-     req.user = { userId: "dev-user", role: "ADMIN" }; // Mock a superuser
-     return next();
-   }
+  // if (process.env.NODE_ENV === "development") {
+  //    req.user = { userId: "dev-user", role: "ADMIN" }; // Mock a superuser
+  //    return next();
+  //  }
   try {
     const authHeader = req.headers.authorization;
 

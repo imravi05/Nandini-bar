@@ -7,14 +7,14 @@ export const ROLES = {
 // 1. Route Access Blueprint (Sidebar & URL Protection)
 export const ROLE_ROUTES = {
   [ROLES.ADMIN]: [
-    "/", // Dashboard
+  //  "/", // Dashboard
     "/products",
     "/inventory",
     "/sales",
     "/daily",
     "/audit",
   ],
-  [ROLES.INVENTORY]: ["/products", "/inventory", "/sales", "/audit"],
+  [ROLES.INVENTORY]: ["/products", "/inventory", "/sales", "/audit","/daily"],
   [ROLES.CASHIER]: ["/sales", "/daily"],
 };
 

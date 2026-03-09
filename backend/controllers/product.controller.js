@@ -6,8 +6,8 @@ export const createProduct = async (req, res, next) => {
     const product = await productService.createProduct(req.body);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
-    console.log("Error creating product:", error);
-    // next(error);
+   // console.log("Error creating product:", error);
+     next(error);
   }
 };
 
@@ -28,8 +28,8 @@ export const getProductById = async (req, res, next) => {
     const product = await productService.getProductById(req.params.id);
     res.json({ success: true, data: product });
   } catch (error) {
-    console.log("Error fetching product by ID:", error);
-    // next(error);
+   // console.log("Error fetching product by ID:", error);
+     next(error);
   }
 };
 
