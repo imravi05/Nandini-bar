@@ -119,7 +119,11 @@ const POSProductGrid = ({ inventory, onAdd }) => {
             }`}
             style={
               activeCategory === cat
-                ? { backgroundColor: "#00ADB5", borderColor: "#00ADB5" }
+                ? {
+                    backgroundColor: "#00ADB5",
+                    borderColor: "#00ADB5",
+                    color: "white",
+                  }
                 : {}
             }
             onMouseEnter={(e) => {
