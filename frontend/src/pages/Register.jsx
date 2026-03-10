@@ -69,7 +69,7 @@ export default function Register() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="your name here"
                 className="block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
                 required
               />
@@ -107,8 +107,8 @@ export default function Register() {
                 className="block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors bg-white"
                 required
               >
-                <option value="CASHIER">Cashier</option>
                 <option value="ADMIN">Admin</option>
+                <option value="CASHIER">Cashier</option>
                 <option value="INVENTORY">Inventory Manager</option>
               </select>
             </div>
