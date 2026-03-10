@@ -100,7 +100,7 @@ export default function InventoryModal({
                   setFormData({ ...formData, costPrice: e.target.value })
                 }
                 placeholder="0.00"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none transition focus-brand"
               />
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function InventoryModal({
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-200 transition"
+              className="flex-1 py-3 px-4 rounded-xl btn-brand font-medium shadow-md transition"
             >
               Save Changes
             </button>

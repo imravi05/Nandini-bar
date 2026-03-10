@@ -16,7 +16,7 @@ import { canAccessRoute } from "../../config/roles";
 
 const Sidebar = ({ isMobile, closeMenu }) => {
   const user = authService.getCurrentUser();
-  const userRole = user?.role || "CASHIER"; // Fallback to safe role
+  const userRole = user?.role || "CASHIER";
 
   const menuItems = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -30,13 +30,18 @@ const Sidebar = ({ isMobile, closeMenu }) => {
 
   return (
     <aside
-      className={`w-full md:w-64 bg-black text-white flex flex-col h-full shadow-xl 
+      style={{ backgroundColor: "#222831" }}
+      className={`w-full md:w-64 text-white flex flex-col h-full shadow-xl 
       ${isMobile ? "flex" : "hidden md:flex z-20"}
     `}
     >
-      <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+      {/* Logo / Brand */}
+      <div className="p-6 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-bold text-xl text-black">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl"
+            style={{ backgroundColor: "#00ADB5", color: "#fff" }}
+          >
             N
           </div>
           <div>
@@ -59,6 +64,7 @@ const Sidebar = ({ isMobile, closeMenu }) => {
         )}
       </div>
 
+      {/* Nav links */}
       <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
         {menuItems
           .filter((item) => canAccessRoute(userRole, item.path))
@@ -72,9 +78,12 @@ const Sidebar = ({ isMobile, closeMenu }) => {
                 className={({ isActive }) =>
                   `group flex items-center gap-3 py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-gray-800 text-white"
-                      : "text-gray-400 hover:bg-gray-900 hover:text-white"
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
                   }`
+                }
+                style={({ isActive }) =>
+                  isActive ? { backgroundColor: "#00ADB5" } : {}
                 }
               >
                 {({ isActive }) => (
@@ -95,8 +104,12 @@ const Sidebar = ({ isMobile, closeMenu }) => {
           })}
       </nav>
 
-      <div className="p-4 border-t border-gray-800 mt-auto">
-        <div className="bg-gray-900 p-4 rounded-xl relative overflow-hidden">
+      {/* System Status */}
+      <div className="p-4 border-t border-white/10 mt-auto">
+        <div
+          className="p-4 rounded-xl relative overflow-hidden"
+          style={{ backgroundColor: "#393E46" }}
+        >
           <p className="text-sm font-semibold text-white">System Status</p>
           <div className="flex items-center gap-2 mt-2">
             <div className="relative flex h-2.5 w-2.5">

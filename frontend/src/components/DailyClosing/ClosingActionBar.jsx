@@ -10,9 +10,11 @@ const STATUS_CONFIG = {
   },
   CLOSED: {
     label: "CLOSED",
-    dot: "bg-red-400",
-    text: "text-red-700",
-    bg: "bg-red-50",
+    dot: "",
+    text: "text-white",
+    bg: "",
+    dotStyle: { backgroundColor: "#FF5722" },
+    bgStyle: { backgroundColor: "#FF57221A" },
   },
   REOPENED: {
     label: "REOPENED",
@@ -73,7 +75,14 @@ const ClosingActionBar = memo(
             <div className="flex items-center gap-3">
               <button
                 onClick={onDownload}
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+                className="text-xs font-semibold border px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+                style={{ color: "#00ADB5", borderColor: "#00ADB5" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#e6f9fa";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "";
+                }}
               >
                 <Download size={13} />
                 Download Excel

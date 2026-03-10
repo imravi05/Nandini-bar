@@ -58,7 +58,10 @@ export default function Products() {
       header: "Category",
       accessor: "category",
       render: (p) => (
-        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-semibold uppercase">
+        <span
+          className="px-2.5 py-1 rounded-full text-xs font-semibold uppercase"
+          style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
+        >
           {p.category}
         </span>
       ),
@@ -201,7 +204,10 @@ export default function Products() {
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+          <div
+            className="p-3 rounded-xl"
+            style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
+          >
             <LayoutGrid size={24} />
           </div>
           <div>
@@ -219,7 +225,7 @@ export default function Products() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition bg-white shrink-0"
+            className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 outline-none transition bg-white shrink-0 focus-brand"
           >
             <option value="">All Categories</option>
             {[...new Set(products.map((p) => p.category).filter(Boolean))]
@@ -242,7 +248,7 @@ export default function Products() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none transition focus-brand"
             />
             {searchQuery && (
               <button
@@ -256,7 +262,7 @@ export default function Products() {
 
           <button
             onClick={handleAddProduct}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-xl transition flex items-center gap-2 shadow-sm shadow-indigo-200 shrink-0"
+            className="btn-brand font-medium py-2.5 px-5 rounded-xl transition flex items-center gap-2 shadow-sm shrink-0"
           >
             <Plus size={18} />
             <span>Add Product</span>
@@ -347,7 +353,7 @@ export default function Products() {
                       setFormData({ ...formData, brand: e.target.value })
                     }
                     placeholder="Optional"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none transition focus-brand"
                   />
                 </div>
 
@@ -363,7 +369,7 @@ export default function Products() {
                       setFormData({ ...formData, unitSize: e.target.value })
                     }
                     placeholder="e.g. 650ml, Peg"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none transition focus-brand"
                   />
                 </div>
 
@@ -380,7 +386,7 @@ export default function Products() {
                       setFormData({ ...formData, basePrice: e.target.value })
                     }
                     placeholder="0.00"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none transition focus-brand"
                   />
                 </div>
 
@@ -395,7 +401,7 @@ export default function Products() {
                       setFormData({ ...formData, barcode: e.target.value })
                     }
                     placeholder="Scan or type barcode (Optional)"
-                    className="w-full px-4 py-2.5 font-mono rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                    className="w-full px-4 py-2.5 font-mono rounded-xl border border-gray-200 outline-none transition focus-brand"
                   />
                 </div>
               </div>
@@ -410,7 +416,7 @@ export default function Products() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-200 transition"
+                  className="flex-1 py-3 px-4 rounded-xl btn-brand font-medium shadow-md transition"
                 >
                   {isEditing ? "Save Changes" : "Create Product"}
                 </button>

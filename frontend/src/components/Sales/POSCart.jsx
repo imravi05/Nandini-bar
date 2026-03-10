@@ -17,7 +17,7 @@ const POSCart = ({
       {/* Cart Header */}
       <div className="px-5 py-4 border-b border-gray-100 shrink-0">
         <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-          <ShoppingBag size={18} className="text-indigo-500" />
+          <ShoppingBag size={18} style={{ color: "#00ADB5" }} />
           Current Order
         </h2>
         <p className="text-xs text-slate-400 mt-0.5">
@@ -64,7 +64,17 @@ const POSCart = ({
                 <button
                   onClick={() => onIncrease(item.productId)}
                   disabled={item.quantity >= item.stock}
-                  className="w-6 h-6 rounded-full flex items-center justify-center bg-white border border-gray-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-6 h-6 rounded-full flex items-center justify-center bg-white border border-gray-200 text-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                  onMouseEnter={(e) => {
+                    if (!e.currentTarget.disabled) {
+                      e.currentTarget.style.borderColor = "#00ADB5";
+                      e.currentTarget.style.color = "#00ADB5";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "";
+                    e.currentTarget.style.color = "";
+                  }}
                 >
                   <Plus size={11} />
                 </button>
@@ -99,7 +109,7 @@ const POSCart = ({
         <button
           disabled={isEmpty || isSubmitting}
           onClick={onCheckout}
-          className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-200 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed btn-brand"
         >
           {isSubmitting ? (
             <>

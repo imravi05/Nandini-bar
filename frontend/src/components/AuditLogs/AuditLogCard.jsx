@@ -100,7 +100,14 @@ const AuditLogCard = memo(({ log, onClick, isFirst, isLast }) => {
       {/* Card body */}
       <div
         onClick={() => onClick(log)}
-        className="mb-4 flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all cursor-pointer p-4 group-hover:-translate-y-0.5 duration-150"
+        className="mb-4 flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer p-4 group-hover:-translate-y-0.5 duration-150"
+        style={{}}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#00ADB5";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "";
+        }}
       >
         <div className="flex items-start justify-between gap-3">
           {/* Left: icon + info */}
@@ -138,7 +145,10 @@ const AuditLogCard = memo(({ log, onClick, isFirst, isLast }) => {
 
         {/* Peek into data if available */}
         {(log.oldData || log.newData) && (
-          <p className="mt-2 text-xs text-indigo-500 font-medium flex items-center gap-1">
+          <p
+            className="mt-2 text-xs font-medium flex items-center gap-1"
+            style={{ color: "#00ADB5" }}
+          >
             <ActionIcon size={11} />
             Click to view changes
           </p>

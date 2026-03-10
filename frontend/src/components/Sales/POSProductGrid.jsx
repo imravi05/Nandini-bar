@@ -102,7 +102,7 @@ const POSProductGrid = ({ inventory, onAdd }) => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search drink..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none transition focus-brand"
         />
       </div>
 
@@ -114,9 +114,26 @@ const POSProductGrid = ({ inventory, onAdd }) => {
             onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border capitalize transition-all ${
               activeCategory === cat
-                ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                : "bg-white text-slate-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+                ? "text-white border-transparent"
+                : "bg-white text-slate-600 border-gray-200 hover:text-white"
             }`}
+            style={
+              activeCategory === cat
+                ? { backgroundColor: "#00ADB5", borderColor: "#00ADB5" }
+                : {}
+            }
+            onMouseEnter={(e) => {
+              if (activeCategory !== cat) {
+                e.currentTarget.style.borderColor = "#00ADB5";
+                e.currentTarget.style.color = "#00ADB5";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeCategory !== cat) {
+                e.currentTarget.style.borderColor = "";
+                e.currentTarget.style.color = "";
+              }
+            }}
           >
             {cat}
           </button>

@@ -152,7 +152,10 @@ export default function DailyClosingPage() {
     <div className="w-full h-full flex flex-col gap-4 overflow-hidden">
       {/* Page Header */}
       <div className="flex items-center gap-3 bg-white px-6 py-4 border-b border-gray-100 shrink-0">
-        <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+        <div
+          className="p-2.5 rounded-xl"
+          style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
+        >
           <CalendarCheck size={22} />
         </div>
         <div>
@@ -165,7 +168,10 @@ export default function DailyClosingPage() {
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center text-slate-400 gap-2">
-          <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+          <div
+            className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: "#00ADB5", borderTopColor: "transparent" }}
+          />
           Loading today's report...
         </div>
       ) : (

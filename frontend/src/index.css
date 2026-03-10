@@ -1,6 +1,33 @@
 @import "tailwindcss";
 
-/* Additional custom global styles can go here */
+/* ── Brand Colour Palette ──────────────────────────── */
+:root {
+  --brand-primary: #00adb5;
+  --brand-hover: #008c92;
+  --brand-sidebar: #222831;
+  --brand-header: #393e46;
+  --success: #00adb5;
+  --warning: #f8b400;
+  --danger: #ff5722;
+}
+
+/* Brand button utilities */
+.btn-brand {
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  transition: background-color 0.15s;
+}
+.btn-brand:hover:not(:disabled) {
+  background-color: var(--brand-hover);
+}
+
+/* Teal focus ring helper */
+.focus-brand:focus {
+  border-color: var(--brand-primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.15);
+}
+
 html,
 body,
 #root {

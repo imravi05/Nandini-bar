@@ -44,8 +44,20 @@ export default function InventoryPage() {
       header: "Category",
       accessor: "product.category",
       render: (inv) => (
-        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-semibold uppercase">
+        <span
+          className="px-2.5 py-1 rounded-full text-xs font-semibold uppercase"
+          style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
+        >
           {inv.product?.category || "—"}
+        </span>
+      ),
+    },
+    {
+      header: "Unit Size",
+      accessor: "product.unitSize",
+      render: (inv) => (
+        <span className="text-slate-500 text-sm">
+          {inv.product?.unitSize || "—"}
         </span>
       ),
     },
@@ -68,7 +80,8 @@ export default function InventoryPage() {
                   if (e.key === "Enter") handleInlineStockSave(inv);
                   if (e.key === "Escape") setInlineEditId(null);
                 }}
-                className="w-20 px-2 py-1 text-sm border border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-20 px-2 py-1 text-sm border rounded-lg focus:outline-none"
+                style={{ borderColor: "#00ADB5" }}
               />
               <button
                 onClick={() => handleInlineStockSave(inv)}
@@ -102,7 +115,14 @@ export default function InventoryPage() {
                 setInlineStockValue(inv.quantity);
                 setTimeout(() => inlineInputRef.current?.focus(), 50);
               }}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded transition"
+              style={{ color: "#00ADB5" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e6f9fa";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "";
+              }}
               title="Edit stock"
             >
               <Pencil size={13} />
@@ -118,18 +138,27 @@ export default function InventoryPage() {
         const qty = inv.quantity;
         if (qty <= 0)
           return (
-            <span className="text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs font-semibold">
+            <span
+              className="px-2 py-1 rounded-md text-xs font-semibold"
+              style={{ backgroundColor: "#FF57221A", color: "#FF5722" }}
+            >
               OUT OF STOCK
             </span>
           );
         if (qty <= 10)
           return (
-            <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded-md text-xs font-semibold">
+            <span
+              className="px-2 py-1 rounded-md text-xs font-semibold"
+              style={{ backgroundColor: "#F8B4001A", color: "#c48a00" }}
+            >
               LOW STOCK
             </span>
           );
         return (
-          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-semibold">
+          <span
+            className="px-2 py-1 rounded-md text-xs font-semibold"
+            style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
+          >
             IN STOCK
           </span>
         );
@@ -250,7 +279,10 @@ export default function InventoryPage() {
     <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in">
       <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+          <div
+            className="p-3 rounded-xl"
+            style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
+          >
             <Package size={24} />
           </div>
           <div>
@@ -269,7 +301,7 @@ export default function InventoryPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition bg-white shrink-0"
+            className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 outline-none transition bg-white shrink-0 focus-brand"
           >
             <option value="">All Categories</option>
             {[
@@ -296,7 +328,7 @@ export default function InventoryPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search inventory..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none transition focus-brand"
             />
             {searchQuery && (
               <button

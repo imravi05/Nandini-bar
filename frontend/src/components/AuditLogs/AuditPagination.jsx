@@ -36,9 +36,10 @@ const AuditPagination = memo(({ pagination, onPageChange }) => {
               onClick={() => onPageChange(p)}
               className={`w-8 h-8 rounded-xl text-xs font-bold transition ${
                 p === page
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                  ? "text-white shadow-md"
                   : "border border-gray-200 text-slate-600 hover:bg-slate-50"
               }`}
+              style={p === page ? { backgroundColor: "#00ADB5" } : {}}
             >
               {p}
             </button>

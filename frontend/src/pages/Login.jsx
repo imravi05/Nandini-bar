@@ -76,7 +76,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors pr-12"
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm outline-none transition-colors focus-brand pr-12"
                   required
                 />
                 <button
@@ -92,7 +92,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={!email || !password || loading}
-              className={`w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${
+              className={`w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white transition-all btn-brand ${
                 !email || !password || loading
                   ? "opacity-75 cursor-not-allowed hidden-hover"
                   : "hover:scale-[1.02]"
@@ -111,7 +111,8 @@ export default function Login() {
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline transition-all"
+              className="font-medium hover:underline transition-all"
+              style={{ color: "#00ADB5" }}
             >
               Register here
             </Link>

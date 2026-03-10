@@ -1,11 +1,11 @@
 import React, { memo } from "react";
 import { TrendingUp, Package, IndianRupee } from "lucide-react";
 
-const StatCard = memo(({ icon: Icon, label, value, sub, color }) => (
+const StatCard = memo(({ icon: Icon, label, value, sub, color, style }) => (
   <div
     className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4`}
   >
-    <div className={`p-3 rounded-xl ${color}`}>
+    <div className={`p-3 rounded-xl ${color}`} style={style}>
       <Icon size={22} />
     </div>
     <div>
@@ -39,7 +39,8 @@ const ClosingStatCards = memo(({ report, isOpen }) => {
         label="Items Sold"
         value={totalQty.toLocaleString("en-IN")}
         sub="total units"
-        color="bg-indigo-50 text-indigo-600"
+        color=""
+        style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
       />
       <StatCard
         icon={Package}

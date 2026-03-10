@@ -53,7 +53,10 @@ const SaleSuccessOverlay = ({ sale, onClose, onUndoComplete }) => {
           Sale Complete!
         </h2>
         <p className="text-sm text-slate-500 mb-1">{sale.saleNumber}</p>
-        <p className="text-3xl font-extrabold text-indigo-600 mb-6">
+        <p
+          className="text-3xl font-extrabold mb-6"
+          style={{ color: "#00ADB5" }}
+        >
           ₹{sale.totalAmount?.toFixed(0)}
         </p>
 

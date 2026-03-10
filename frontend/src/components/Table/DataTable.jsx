@@ -8,8 +8,11 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
       <div className="overflow-auto flex-1">
         <table className="w-full text-left border-collapse">
           {/* Sticky column headers */}
-          <thead className="sticky top-0 z-10 bg-slate-50">
-            <tr className="border-b border-gray-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <thead
+            className="sticky top-0 z-10"
+            style={{ backgroundColor: "#393E46" }}
+          >
+            <tr className="border-b border-white/10 text-xs font-semibold text-gray-300 uppercase tracking-wider">
               {columns.map((col, idx) => (
                 <th key={idx} className="px-6 py-4 whitespace-nowrap">
                   {col.header}
@@ -29,7 +32,13 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
                   className="px-6 py-16 text-center text-slate-400"
                 >
                   <div className="flex justify-center items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                    <div
+                      className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+                      style={{
+                        borderColor: "#00ADB5",
+                        borderTopColor: "transparent",
+                      }}
+                    />
                     Loading data...
                   </div>
                 </td>
@@ -38,7 +47,14 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
               data.map((row, rowIndex) => (
                 <tr
                   key={row.id || rowIndex}
-                  className="hover:bg-indigo-50/30 transition-colors group"
+                  className="transition-colors group"
+                  style={{ cursor: "default" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#f0fafa")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "")
+                  }
                 >
                   {columns.map((col, colIndex) => (
                     <td key={colIndex} className="px-6 py-4 text-slate-700">
@@ -51,7 +67,15 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
                         {onEdit && (
                           <button
                             onClick={() => onEdit(row)}
-                            className="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors"
+                            className="p-1.5 rounded-md transition-colors"
+                            style={{ color: "#00ADB5" }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                "#e0f7f8")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.backgroundColor = "")
+                            }
                             title="Edit"
                           >
                             <Edit size={20} />
@@ -85,7 +109,7 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
         </table>
       </div>
 
-      {/* Footer — just a record count, no pagination buttons */}
+      {/* Footer */}
       <div className="px-6 py-3 border-t border-gray-100 bg-slate-50/50 text-xs text-slate-400 shrink-0">
         {data?.length || 0} records total
       </div>
