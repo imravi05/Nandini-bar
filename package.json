@@ -6,8 +6,14 @@
   "scripts": {
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend && npm run dev",
-    "electron": "wait-on http://localhost:5173 && electron .",
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run electron\""
+    "electron": "wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run electron\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm install",
+    "dist": "npm run build:frontend && electron-builder",
+    "dist:win": "npm run build:frontend && npm run prisma:generate && electron-builder --win",
+    "prisma:generate": "prisma generate --schema=./backend/prisma/schema.prisma",
+    "postinstall": "electron-builder install-app-deps"
   },
   "repository": {
     "type": "git",
@@ -22,9 +28,52 @@
   },
   "homepage": "https://github.com/imravi05/Nandini-bar#readme",
   "dependencies": {
-    "concurrently": "^9.2.1",
     "dotenv": "^17.3.1",
+    "@prisma/client": "^5.22.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^4.3.6",
+    "prisma": "^5.22.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
     "electron": "^40.6.1",
-    "wait-on": "^9.0.4"
+    "wait-on": "^9.0.4",
+    "electron-builder": "^26.0.2"
+  },
+  "build": {
+    "appId": "com.nandinibar.app",
+    "productName": "Nandini Bar",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "electron/**/*",
+      "frontend/dist/**/*",
+      "backend/**/*",
+      "!backend/node_modules",
+      "!backend/.env",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "backend/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "electron/assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
   }
 }
+

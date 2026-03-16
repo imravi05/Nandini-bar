@@ -34,8 +34,9 @@ export const downloadReport = async (req, res, next) => {
 
     // Use raw date string — no conversion to avoid UTC/IST timezone shift
     const formattedDate = date; // already YYYY-MM-DD
-    let filePath = path.resolve(
-      "reports",
+    const reportsDir = process.env.REPORTS_DIR || path.resolve("reports");
+    let filePath = path.join(
+      reportsDir,
       `Daily_Report_${formattedDate}.xlsx`,
     );
 

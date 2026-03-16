@@ -117,9 +117,9 @@ export const generateDailyExcel = async (closingData) => {
     column.width = 18;
   });
 
-  const reportsDir = path.resolve("reports");
+  const reportsDir = process.env.REPORTS_DIR || path.resolve("reports");
   if (!fs.existsSync(reportsDir)) {
-    fs.mkdirSync(reportsDir);
+    fs.mkdirSync(reportsDir, { recursive: true });
   }
 
   const fileName = `Daily_Report_${formattedDate}.xlsx`;
