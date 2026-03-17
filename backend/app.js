@@ -16,9 +16,20 @@ dotenv.config();
 const app = express();
 
 // Middlewares
+const allowedOrigins = new Set([
+  'http://localhost:5173',
+  process.env.VERCEL_URL
+]);
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? '*' : 'http://localhost:5173',
-  credentials: true,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 app.use(express.json());
 app.use(helmet());
