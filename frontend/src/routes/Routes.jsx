@@ -6,7 +6,7 @@ import PublicRoutes from "./PublicRoutes";
 import ProtectedRoutes from "./ProtectedRoutes";
 
 // Layouts
-import Layout from "../layout/layout";
+import Layout from "../layout/Layout";
 
 // Pages
 import Login from "../pages/Login";
