@@ -28,24 +28,24 @@
   },
   "homepage": "https://github.com/imravi05/Nandini-bar#readme",
   "dependencies": {
-    "dotenv": "^17.3.1",
     "@prisma/client": "^5.22.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "zod": "^4.3.6",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
     "electron": "^40.6.1",
-    "wait-on": "^9.0.4",
-    "electron-builder": "^26.0.2"
+    "electron-builder": "^26.0.2",
+    "wait-on": "^9.0.4"
   },
   "build": {
     "appId": "com.nandinibar.app",
@@ -76,4 +76,3 @@
     }
   }
 }
-
