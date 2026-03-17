@@ -18,7 +18,7 @@ const app = express();
 // Middlewares
 const allowedOrigins = new Set([
   'http://localhost:5173',
-  process.env.VERCEL_URL
+  'https://shree-om-sai-krupa.vercel.app'
 ]);
 
 app.use(cors({
