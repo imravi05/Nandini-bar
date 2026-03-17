@@ -23,13 +23,17 @@ const allowedOrigins = new Set([
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) {
-      callback(null, true);
+    if (!origin) return callback(null, true); // for Electron/Postman
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 app.use(helmet());
