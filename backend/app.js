@@ -12,6 +12,7 @@ import auditRoutes from "./routes/audit.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/users.routes.js";
 
+dotenv.config();
 const app = express();
 
 // Middlewares
@@ -21,7 +22,6 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(helmet());
-dotenv.config();
 
 // Health check
 app.get("/health", (req, res) => {
