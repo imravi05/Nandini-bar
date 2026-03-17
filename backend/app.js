@@ -23,9 +23,10 @@ const allowedOrigins = new Set([
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // for Electron/Postman
+    if (!origin) return callback(null, true); 
 
-    if (allowedOrigins.includes(origin)) {
+    // Use .has() for Sets instead of .includes()
+    if (allowedOrigins.has(origin)) { 
       return callback(null, true);
     } else {
       return callback(new Error("Not allowed by CORS"));
