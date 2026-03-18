@@ -27,12 +27,14 @@ export const generateDailyExcel = async (closingData) => {
   // 🟢 HEADER
   const headerRow = sheet.addRow([
     "Product",
-    "Opening",
+    "OB",
     "Received",
     "Total",
-    "Sold",
+    "Parcell",
+    "Total",
+    "Sale",
+    "CB",
     "Sale Amount",
-    "Closing",
     "Closing Value",
   ]);
 
@@ -60,9 +62,11 @@ export const generateDailyExcel = async (closingData) => {
       item.openingStock,
       item.receivedStock,
       item.totalStock,
+      //item.parcell
+      item.totalStock,
       item.soldQuantity,
-      item.saleAmount,
       item.closingStock,
+      item.saleAmount,
       item.closingValue,
     ]);
 
