@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors"
+import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 
@@ -17,25 +17,27 @@ const app = express();
 
 // Middlewares
 const allowedOrigins = new Set([
-  'http://localhost:5173',
-  process.env.VERCEL_URL
+  "http://localhost:5173",
+  process.env.VERCEL_URL,
 ]);
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); 
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
 
-    // Use .has() for Sets instead of .includes()
-    if (allowedOrigins.has(origin)) { 
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+      // Use .has() for Sets instead of .includes()
+      if (allowedOrigins.has(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 app.use(helmet());
 
@@ -50,11 +52,10 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/daily", dailyClosingRoutes);
 app.use("/api/audit", auditRoutes);
-app.use("/api/auth",authRoutes);
-app.use("/api/users",userRoutes);
-
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 // Global error handler
 app.use(errorHandler);
 
-export default app; 
+export default app;
