@@ -108,7 +108,7 @@ export default function SalesPage() {
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center gap-3 bg-white px-6 py-4 border-b border-gray-100 shrink-0">
+      <div className="flex items-center gap-3 bg-white px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 shrink-0">
         <div
           className="p-2.5 rounded-xl"
           style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
@@ -135,14 +135,14 @@ export default function SalesPage() {
           Loading inventory...
         </div>
       ) : (
-        <div className="flex-1 flex overflow-hidden p-4 gap-4">
-          {/* LEFT: Product Grid (70%) */}
-          <div className="flex-[7] overflow-hidden flex flex-col">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-2 sm:p-4 gap-2 sm:gap-4">
+          {/* TOP/LEFT: Product Grid */}
+          <div className="flex-[6] lg:flex-[7] overflow-hidden flex flex-col">
             <POSProductGrid inventory={inventory} onAdd={addToCart} />
           </div>
 
-          {/* RIGHT: Cart (30%) */}
-          <div className="flex-[3] min-w-[260px] overflow-hidden">
+          {/* BOTTOM/RIGHT: Cart */}
+          <div className="flex-[4] lg:flex-[3] w-full lg:w-auto lg:min-w-[300px] overflow-hidden">
             <POSCart
               cart={cart}
               onIncrease={increase}
