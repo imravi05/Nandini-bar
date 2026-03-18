@@ -14,8 +14,8 @@ export const ROLE_ROUTES = {
     "/daily",
     "/audit",
   ],
-  [ROLES.INVENTORY]: ["/products", "/inventory", "/sales", "/audit","/daily"],
-  [ROLES.CASHIER]: ["/sales", "/daily"],
+  [ROLES.INVENTORY]: ["/products", "/inventory", "/audit","/daily"],
+  [ROLES.CASHIER]: ["/sales", "/inventory"],
 };
 
 // 2. Action Blueprint (Protecting specific buttons inside pages)
@@ -23,7 +23,7 @@ export const ROLE_ACTIONS = {
   [ROLES.ADMIN]: ["VOID_SALE", "DELETE_PRODUCT", "REOPEN_DAY", "EDIT_PRICE"],
   [ROLES.INVENTORY]: ["VOID_SALE", "EDIT_PRICE"],
   [ROLES.CASHIER]: [
-    "VOID_SALE",
+    "VOID_SALE", ,
     // Cashier cannot do other sensitive actions
   ],
 };
