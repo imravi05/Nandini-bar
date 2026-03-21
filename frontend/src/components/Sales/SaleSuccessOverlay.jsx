@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CheckCircle, RotateCcw, X } from "lucide-react";
-import salesService from "../../services/sales.service";
+import { useDeleteSale } from "../../hooks/queries/useSales";
 import toast from "react-hot-toast";
 
 import authService from "../../services/auth.service";
@@ -11,17 +11,22 @@ const SaleSuccessOverlay = ({ sale, onClose, onUndoComplete }) => {
   const userRole = user?.role || ROLES.CASHIER;
   const canVoid = canPerformAction(userRole, "VOID_SALE");
   const [isUndoing, setIsUndoing] = useState(false);
+  const deleteSaleMutation = useDeleteSale();
 
-  const handleUndo = async () => {
+  const handleUndo = () => {
     setIsUndoing(true);
-    try {
-      await salesService.deleteSale(sale.id);
-      toast.success("Sale reversed. Stock restored.");
-      onUndoComplete(); // tells parent to refresh inventory
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Could not undo sale.");
-      setIsUndoing(false);
-    }
+    deleteSaleMutation.mutate(sale.id, {
+      onSuccess: () => {
+        toast.success("Sale reversed. Stock restored.");
+        onUndoComplete(); // tells parent to refresh inventory
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || "Could not undo sale.");
+      },
+      onSettled: () => {
+        setIsUndoing(false);
+      }
+    });
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { memo, useState } from "react";
+import React, { memo } from "react";
 import { AlertTriangle, X, Lock } from "lucide-react";
 
 const ClosingConfirmModal = memo(

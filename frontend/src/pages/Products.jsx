@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "../components/Table/DataTable";
-import productService from "../services/product.service";
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "../hooks/queries/useProducts";
 import toast from "react-hot-toast";
 import { Plus, X, Search } from "lucide-react";
 import SearchableDropdown from "../components/Form/SearchableDropdown";
@@ -18,8 +18,23 @@ const PREDEFINED_CATEGORIES = [
 ].sort();
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: productsData, isLoading, isError, error } = useProducts();
+  const products = Array.isArray(productsData?.data) 
+    ? productsData.data 
+    : (Array.isArray(productsData) ? productsData : []);
+
+  useEffect(() => {
+    if (isError) {
+      console.error("Products Fetch Error:", error);
+      const serverMsg = error.response?.data?.message || "Failed to load products";
+      toast.error(serverMsg);
+    }
+  }, [isError, error]);
+  
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
 
@@ -87,25 +102,6 @@ export default function Products() {
     },
   ];
 
-  /* ---------------- FETCH PRODUCTS ---------------- */
-  const fetchProducts = async () => {
-    try {
-      setIsLoading(true);
-      const res = await productService.getProducts();
-      // Ensure we hit the right generic array based on your backend formatting
-      setProducts(res.data || res.products || res || []);
-    } catch (error) {
-      toast.error("Failed to load products");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   /* ---------------- OPEN MODAL HANDLERS ---------------- */
   const handleAddProduct = () => {
     setFormData({
@@ -161,13 +157,14 @@ export default function Products() {
     if (!window.confirm(`Are you sure you want to delete "${product.name}"?`))
       return;
 
-    try {
-      await productService.deleteProduct(product.id);
-      toast.success("Product deleted successfully");
-      fetchProducts();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete product");
-    }
+    deleteProductMutation.mutate(product.id, {
+      onSuccess: () => {
+        toast.success("Product deleted successfully");
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || "Failed to delete product");
+      }
+    });
   };
 
   /* ---------------- SUBMIT FORM ---------------- */
@@ -182,19 +179,28 @@ export default function Products() {
       barcode: formData.barcode || null,
     };
 
-    try {
-      if (isEditing) {
-        await productService.updateProduct(editingId, payload);
-        toast.success("Product updated successfully");
-      } else {
-        await productService.createProduct(payload);
-        toast.success("Product created successfully");
-      }
-      setIsModalOpen(false);
-      fetchProducts();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Action failed");
-      console.error(error);
+    if (isEditing) {
+      updateProductMutation.mutate({ id: editingId, productData: payload }, {
+        onSuccess: () => {
+          toast.success("Product updated successfully");
+          setIsModalOpen(false);
+        },
+        onError: (error) => {
+          toast.error(error.response?.data?.message || "Action failed");
+          console.error(error);
+        }
+      });
+    } else {
+      createProductMutation.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Product created successfully");
+          setIsModalOpen(false);
+        },
+        onError: (error) => {
+          toast.error(error.response?.data?.message || "Action failed");
+          console.error(error);
+        }
+      });
     }
   };
 

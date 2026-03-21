@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import authService from "../services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { queryClient } from "../lib/react-query";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -20,7 +21,8 @@ export default function Login() {
       await authService.login(data);
       toast.success("Logged in successfully!");
 
-      // Usually redirects to a dashboard or pos route
+      // Clear any stale queries from previous/anonymous sessions
+      queryClient.clear();
       navigate("/");
     } catch (error) {
       toast.error(error.response?.data?.message || "Invalid credentials");

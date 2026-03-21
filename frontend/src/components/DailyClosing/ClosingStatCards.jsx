@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { TrendingUp, Package, IndianRupee } from "lucide-react";
 
+// eslint-disable-next-line no-unused-vars
 const StatCard = memo(({ icon: Icon, label, value, sub, color, style }) => (
   <div
     className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4`}

@@ -1,33 +1,21 @@
-import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import DataTable from "../../components/Table/DataTable";
 import InventoryModal from "../../components/Inventory/InventoryModal";
-import { useInventory, useAdjustInventory } from "../../hooks/queries/useInventory";
-import { useUpdateProduct } from "../../hooks/queries/useProducts";
+import inventoryService from "../../services/inventory.service";
+import productService from "../../services/product.service";
 import toast from "react-hot-toast";
 import { Package, Check, X, Pencil, Search } from "lucide-react";
 
 export default function InventoryPage() {
-  const { data: inventoryData, isLoading, isError, error } = useInventory();
-  const inventories = Array.isArray(inventoryData?.data) 
-    ? inventoryData.data 
-    : (Array.isArray(inventoryData) ? inventoryData : []);
-
-  useEffect(() => {
-    if (isError) {
-      console.error("Inventory Fetch Error:", error);
-      const serverMsg = error.response?.data?.message || "Failed to load inventory";
-      toast.error(serverMsg);
-    }
-  }, [isError, error]);
-  
-  const adjustInventoryMutation = useAdjustInventory();
-  const updateProductMutation = useUpdateProduct();
-
+  const [inventories, setInventories] = useState([]);
+  const [productsMaster, setProductsMaster] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
 
   // Modal State (for editing product details only)
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [editingProductId, setEditingProductId] = useState(null);
 
   // Inline stock edit state
@@ -35,7 +23,7 @@ export default function InventoryPage() {
   const [inlineStockValue, setInlineStockValue] = useState("");
   const inlineInputRef = useRef(null);
 
-  // Form State for modal (no stock field — stock is edited inline)
+  // Form State for modal (no stock field ΓÇö stock is edited inline)
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -60,7 +48,7 @@ export default function InventoryPage() {
           className="px-2.5 py-1 rounded-full text-xs font-semibold uppercase"
           style={{ backgroundColor: "#e6f9fa", color: "#00ADB5" }}
         >
-          {inv.product?.category || "—"}
+          {inv.product?.category || "ΓÇö"}
         </span>
       ),
     },
@@ -69,7 +57,7 @@ export default function InventoryPage() {
       accessor: "product.unitSize",
       render: (inv) => (
         <span className="text-slate-500 text-sm">
-          {inv.product?.unitSize || "—"}
+          {inv.product?.unitSize || "ΓÇö"}
         </span>
       ),
     },
@@ -179,7 +167,27 @@ export default function InventoryPage() {
   ];
 
   /* ---------------- FETCH DATA ---------------- */
-  // Left deliberately empty to comment out structural layout. Use react-query data directly.
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [invRes, prodRes] = await Promise.all([
+        inventoryService.getInventory(),
+        productService.getProducts(),
+      ]);
+
+      setInventories(invRes.data || invRes.inventory || invRes || []);
+      setProductsMaster(prodRes.data || prodRes.products || prodRes || []);
+    } catch (error) {
+      toast.error("Failed to load inventory data");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   /* ---------------- INLINE STOCK EDIT SAVE ---------------- */
   const handleInlineStockSave = async (inv) => {
@@ -195,19 +203,18 @@ export default function InventoryPage() {
       return;
     }
 
-    adjustInventoryMutation.mutate({
-      productId: inv.productId,
-      changeQty,
-      reason: changeQty > 0 ? "Stock top-up" : "Stock correction"
-    }, {
-      onSuccess: () => {
-        toast.success(`Stock updated to ${newQty} units`);
-        setInlineEditId(null);
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || "Failed to update stock");
-      }
-    });
+    try {
+      await inventoryService.adjustInventory(
+        inv.productId,
+        changeQty,
+        changeQty > 0 ? "Stock top-up" : "Stock correction",
+      );
+      toast.success(`Stock updated to ${newQty} units`);
+      setInlineEditId(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update stock");
+    }
   };
 
   /* ---------------- OPEN EDIT MODAL (product details only) ---------------- */
@@ -218,8 +225,29 @@ export default function InventoryPage() {
       costPrice: inv.product?.basePrice || 0,
       reason: "",
     });
+    setEditingId(inv.id);
     setEditingProductId(inv.productId);
     setIsModalOpen(true);
+  };
+
+  /* ---------------- DELETE INVENTORY ---------------- */
+  const handleDeleteStock = async (inv) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to remove ${inv.product?.name} from inventory? Stock must be 0 to delete.`,
+      )
+    )
+      return;
+
+    try {
+      await inventoryService.deleteInventory(inv.id);
+      toast.success("Inventory entry deleted successfully");
+      fetchData();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to delete. Stock must be 0.",
+      );
+    }
   };
 
   /* ---------------- SUBMIT FORM (product details only) ---------------- */
@@ -231,23 +259,20 @@ export default function InventoryPage() {
     if (!formData.name?.trim()) return toast.error("Product name is required");
     if (!formData.category?.trim()) return toast.error("Category is required");
 
-    updateProductMutation.mutate({
-      id: editingProductId,
-      productData: {
+    try {
+      // Update product details only (stock is managed inline)
+      await productService.updateProduct(editingProductId, {
         name: formData.name,
         category: formData.category,
         basePrice: costPrice,
-      }
-    }, {
-      onSuccess: () => {
-        toast.success("Product details updated successfully");
-        setIsModalOpen(false);
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || "Update failed");
-        console.error(error);
-      }
-    });
+      });
+      toast.success("Product details updated successfully");
+      setIsModalOpen(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Update failed");
+      console.error(error);
+    }
   };
 
   return (

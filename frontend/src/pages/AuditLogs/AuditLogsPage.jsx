@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Shield } from "lucide-react";
-import toast from "react-hot-toast";
 
-import auditService from "../../services/audit.service";
+import { useAuditLogs } from "../../hooks/queries/useAudit";
 import AuditFilterBar from "../../components/AuditLogs/AuditFilterBar";
 import AuditTimeline from "../../components/AuditLogs/AuditTimeline";
 import AuditDiffDrawer from "../../components/AuditLogs/AuditDiffDrawer";
@@ -19,46 +18,24 @@ const DEFAULT_FILTERS = {
 
 export default function AuditLogsPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [logs, setLogs] = useState([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    totalPages: 1,
-    total: 0,
-    limit: 20,
-  });
-  const [isLoading, setIsLoading] = useState(true);
   const [activeLog, setActiveLog] = useState(null); // log shown in drawer
 
-  // Debounce ref — prevent a fetch on every keystroke for ID field
-  const debounceRef = useRef(null);
+  // Build clean query — omit empty strings
+  const queryParams = Object.fromEntries(
+    Object.entries(filters).filter(([, v]) => v !== "" && v !== null),
+  );
 
-  const fetchLogs = useCallback(async (params) => {
-    setIsLoading(true);
-    try {
-      // Build clean query — omit empty strings
-      const query = Object.fromEntries(
-        Object.entries(params).filter(([, v]) => v !== "" && v !== null),
-      );
-      const res = await auditService.getLogs(query);
-      setLogs(res.data ?? []);
-      setPagination(
-        res.pagination ?? { page: 1, totalPages: 1, total: 0, limit: 20 },
-      );
-    } catch {
-      toast.error("Failed to load audit logs.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { data, isLoading, isFetching, isError, error } = useAuditLogs(queryParams);
+  const logs = Array.isArray(data?.data) ? data.data : [];
+  const pagination = data?.pagination ?? { page: 1, totalPages: 1, total: 0, limit: 20 };
 
-  // Debounced fetch whenever filters change
   useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      fetchLogs(filters);
-    }, 300);
-    return () => clearTimeout(debounceRef.current);
-  }, [filters, fetchLogs]);
+    if (isError) {
+      console.error("Audit Logs Fetch Error:", error);
+      const serverMsg = error.response?.data?.message || "Failed to load audit logs";
+      toast.error(serverMsg);
+    }
+  }, [isError, error]);
 
   const handleFilterChange = useCallback((next) => setFilters(next), []);
 
@@ -115,7 +92,17 @@ export default function AuditLogsPage() {
             Loading logs…
           </div>
         ) : (
-          <AuditTimeline logs={logs} onCardClick={setActiveLog} />
+          <div className="flex-1 overflow-hidden relative flex flex-col">
+            {isFetching && (
+              <div
+                className="absolute top-2 right-4 z-20 px-3 py-1 bg-white/90 backdrop-blur-sm border shadow-sm rounded-full text-[10px] animate-pulse"
+                style={{ color: "#00ADB5", borderColor: "#e6f9fa" }}
+              >
+                Syncing logs...
+              </div>
+            )}
+            <AuditTimeline logs={logs} onCardClick={setActiveLog} />
+          </div>
         )}
 
         {/* Pagination */}

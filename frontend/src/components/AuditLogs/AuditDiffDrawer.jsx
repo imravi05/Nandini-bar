@@ -63,6 +63,7 @@ const formatValue = (key, val) => {
   return String(val);
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getReadableRef = (log) => {
   const data = log.newData || log.oldData || {};
   if (log.entityType === "Sale" && data.saleNumber)

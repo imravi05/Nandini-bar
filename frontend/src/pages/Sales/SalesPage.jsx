@@ -1,37 +1,34 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 
-import inventoryService from "../../services/inventory.service";
-import salesService from "../../services/sales.service";
+import { useInventory } from "../../hooks/queries/useInventory";
+import { useCreateSale } from "../../hooks/queries/useSales";
 import POSProductGrid from "../../components/Sales/POSProductGrid";
 import POSCart from "../../components/Sales/POSCart";
 import SaleSuccessOverlay from "../../components/Sales/SaleSuccessOverlay";
 
 export default function SalesPage() {
-  const [inventory, setInventory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: inventoryData, isLoading, isError, error, refetch: fetchInventory } = useInventory();
+  const inventory = Array.isArray(inventoryData?.data) 
+    ? inventoryData.data 
+    : (Array.isArray(inventoryData) ? inventoryData : []);
+
+  useEffect(() => {
+    if (isError) {
+      console.error("Sales Terminal Inventory Error:", error);
+      const serverMsg = error.response?.data?.message || "Failed to load terminal inventory";
+      toast.error(serverMsg);
+    }
+  }, [isError, error]);
+  
+  const createSaleMutation = useCreateSale();
 
   const [cart, setCart] = useState([]); // [{ productId, name, category, unitSize, price, stock, quantity }]
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSale, setLastSale] = useState(null); // holds the completed sale for Undo overlay
 
-  /* ─── Fetch live inventory (products that are in stock) ─── */
-  const fetchInventory = useCallback(async () => {
-    try {
-      const data = await inventoryService.getInventory();
-      const withStock = Array.isArray(data) ? data : data?.data || [];
-      setInventory(withStock);
-    } catch (err) {
-      toast.error("Failed to load inventory.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchInventory();
-  }, [fetchInventory]);
+  /* ─── Fetch live inventory handled by React Query ─── */
 
   /* ─── Cart operations ─── */
   const addToCart = useCallback((item) => {
@@ -82,21 +79,24 @@ export default function SalesPage() {
   }, []);
 
   /* ─── Checkout ─── */
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) return;
     setIsSubmitting(true);
-    try {
-      const sale = await salesService.createSale(cart);
-      setLastSale(sale); // triggers the success overlay
-      setCart([]); // clear the cart
-      fetchInventory(); // refresh stock counts on the grid
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Sale failed. Please try again.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    
+    createSaleMutation.mutate(cart, {
+      onSuccess: (sale) => {
+        setLastSale(sale); // triggers the success overlay
+        setCart([]); // clear the cart
+      },
+      onError: (error) => {
+        toast.error(
+          error.response?.data?.message || "Sale failed. Please try again.",
+        );
+      },
+      onSettled: () => {
+        setIsSubmitting(false);
+      }
+    });
   };
 
   /* ─── Undo completed ─── */

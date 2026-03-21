@@ -3,6 +3,7 @@ import { CalendarCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
 import dailyClosingService from "../../services/dailyClosing.service";
+import { useCloseDay, useReopenDay, useCompositeDailyReport } from "../../hooks/queries/useDailyClosing";
 import authService from "../../services/auth.service";
 import { canPerformAction, ROLES } from "../../config/roles";
 
@@ -30,123 +31,66 @@ export default function DailyClosingPage() {
   const userRole = user?.role || ROLES.CASHIER;
   const canReopen = canPerformAction(userRole, "REOPEN_DAY");
 
-  const [report, setReport] = useState(null); // DailyClosing | null
-  const [status, setStatus] = useState("OPEN"); // OPEN | CLOSED | REOPENED
-  const [isLoading, setIsLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  /* ─── Shared: compute a live report from today's raw sales ─── */
-  const fetchLiveSales = useCallback(async () => {
-    const sales = await dailyClosingService.getTodaySales(today);
-    let totalSalesAmount = 0;
-    let totalSalesQuantity = 0;
-    const productMap = {};
+  // React Query mutations
+  const closeDayMutation = useCloseDay();
+  const reopenDayMutation = useReopenDay();
 
-    for (const sale of sales) {
-      totalSalesAmount += sale.totalAmount ?? 0;
-      for (const item of sale.items ?? []) {
-        totalSalesQuantity += item.quantity;
-        if (!productMap[item.productId]) {
-          productMap[item.productId] = {
-            id: item.productId,
-            product: item.product,
-            openingStock: null,
-            receivedStock: 0,
-            totalStock: null,
-            soldQuantity: 0,
-            saleAmount: 0,
-            closingStock: null,
-            closingValue: null,
-          };
-        }
-        productMap[item.productId].soldQuantity += item.quantity;
-        productMap[item.productId].saleAmount += item.totalPrice ?? 0;
-      }
-    }
+  // Use the composite hook for seamless report data (handles official vs live)
+  const { 
+    data: compositeData, 
+    isLoading, 
+    isFetching, 
+    isError, 
+    error 
+  } = useCompositeDailyReport(today);
 
-    return {
-      totalSalesAmount,
-      totalSalesQuantity,
-      totalClosingValue: 0,
-      summaries: Object.values(productMap),
-    };
-  }, [today]);
-
-  /* ─── Fetch today's closing report ─── */
-  const fetchReport = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await dailyClosingService.getReport(today);
-      if (data && data.id) {
-        if (data.status === "CLOSED") {
-          // Official closed data — show the snapshot as-is
-          setReport(data);
-          setStatus("CLOSED");
-        } else {
-          // REOPENED — day is active again, show live sales (not the stale snapshot)
-          const liveReport = await fetchLiveSales();
-          setReport(liveReport);
-          setStatus("REOPENED");
-        }
-      } else {
-        setReport(null);
-        setStatus("OPEN");
-      }
-    } catch (err) {
-      if (err?.response?.status === 404) {
-        // OPEN — no DailyClosing record yet, fetch live sales
-        try {
-          const liveReport = await fetchLiveSales();
-          setReport(liveReport);
-        } catch {
-          setReport(null);
-        }
-        setStatus("OPEN");
-      } else {
-        toast.error("Failed to load today's report.");
-        setReport(null);
-        setStatus("OPEN");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [today, fetchLiveSales]);
+  // Derive final report/status from hook data
+  const report = compositeData?.report || null;
+  const status = compositeData?.status || 'OPEN';
+  const summaries = report?.summaries || [];
 
   useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
+    if (isError) {
+      console.error("Daily Report Fetch Error:", error);
+      const serverMsg = error.response?.data?.message || "Failed to load report";
+      toast.error(serverMsg);
+    }
+  }, [isError, error]);
 
   /* ─── Close Day ─── */
-  const handleCloseDay = async () => {
+  const handleCloseDay = () => {
     setIsClosing(true);
-    try {
-      const result = await dailyClosingService.closeDay();
-      setReport(result);
-      setStatus("CLOSED");
-      setShowConfirm(false);
-      toast.success(
-        "Day closed successfully! Excel report is being generated.",
-      );
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to close day.");
-    } finally {
-      setIsClosing(false);
-    }
+    closeDayMutation.mutate(undefined, {
+      onSuccess: () => {
+        setShowConfirm(false);
+        toast.success(
+          "Day closed successfully! Excel report is being generated.",
+        );
+      },
+      onError: (err) => {
+        toast.error(err?.response?.data?.message || "Failed to close day.");
+      },
+      onSettled: () => {
+        setIsClosing(false);
+      }
+    });
   };
 
   /* ─── Reopen Day (admin) ─── */
-  const handleReopenDay = async () => {
-    try {
-      await dailyClosingService.reopenDay(today);
-      setStatus("REOPENED");
-      toast.success("Day reopened. Sales can now be recorded again.");
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to reopen day.");
-    }
+  const handleReopenDay = () => {
+    reopenDayMutation.mutate(today, {
+      onSuccess: () => {
+        toast.success("Day reopened. Sales can now be recorded again.");
+      },
+      onError: (err) => {
+        toast.error(err?.response?.data?.message || "Failed to reopen day.");
+      }
+    });
   };
 
-  const summaries = report?.summaries ?? [];
 
   return (
     <div className="w-full h-full flex flex-col gap-4 overflow-hidden">
@@ -175,7 +119,15 @@ export default function DailyClosingPage() {
           Loading today's report...
         </div>
       ) : (
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden px-4 pb-4">
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden px-4 pb-4 relative">
+          {isFetching && (
+            <div
+              className="absolute top-0 right-4 z-20 px-3 py-1 bg-white/90 backdrop-blur-sm border shadow-sm rounded-full text-[10px] animate-pulse"
+              style={{ color: "#00ADB5", borderColor: "#e6f9fa" }}
+            >
+              Syncing report...
+            </div>
+          )}
           {/* Stat cards */}
           <ClosingStatCards report={report} isOpen={status === "OPEN"} />
 

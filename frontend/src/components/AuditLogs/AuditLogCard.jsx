@@ -79,7 +79,7 @@ const formatDate = (iso) =>
   });
 
 /* ── Card ─────────────────────────────────────────────── */
-const AuditLogCard = memo(({ log, onClick, isFirst, isLast }) => {
+const AuditLogCard = memo(({ log, onClick, isLast }) => {
   const eCfg = getEntityCfg(log.entityType);
   const aCfg = getActionCfg(log.action);
   const EntityIcon = eCfg.icon;
