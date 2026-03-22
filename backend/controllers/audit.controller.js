@@ -11,6 +11,10 @@ export const getAuditLogs = async (req, res, next) => {
       ...result
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch audit logs"
+    });
     next(error);
   }
 };

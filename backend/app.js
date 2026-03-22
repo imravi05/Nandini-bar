@@ -55,7 +55,7 @@ app.use("/api/daily", dailyClosingRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("api/parcels",parcerRoutes);
+app.use("/api/parcels",parcerRoutes);
 
 
 // Global error handler

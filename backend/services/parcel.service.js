@@ -2,7 +2,9 @@ import prisma from "../config/prisma.js";
 
 export const createParcelSale = async (data) => {
   const { items } = data;
-
+  if (item.quantity <= 0) {
+  throw new Error("Invalid quantity");
+}
   let totalAmount = 0;
 
   items.forEach(item => {
@@ -38,7 +40,7 @@ export const createParcelSale = async (data) => {
         }
       });
 
-      // 3️⃣ Reduce Inventory
+
       await tx.shopInventory.update({
         where: { productId: item.productId },
         data: {
