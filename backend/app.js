@@ -11,6 +11,7 @@ import dailyClosingRoutes from "./routes/dailyClosing.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/users.routes.js";
+import parcerRoutes from "./routes/parcel.routes.js";
 
 dotenv.config();
 const app = express();
@@ -54,6 +55,8 @@ app.use("/api/daily", dailyClosingRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("api/parcels",parcerRoutes);
+
 
 // Global error handler
 app.use(errorHandler);

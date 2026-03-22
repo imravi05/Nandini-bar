@@ -94,7 +94,8 @@ model DailyProductSummary {
   dailyClosingId  String
   productId       String
   openingStock    Int
-  receivedStock   Int
+  receivedStock   Int 
+  parcel          Int
   totalStock      Int
   soldQuantity    Int
   saleAmount      Float
