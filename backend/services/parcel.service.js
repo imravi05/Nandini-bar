@@ -2,7 +2,7 @@ import prisma from "../config/prisma.js";
 
 export const createParcelSale = async (data) => {
   const { items } = data;
-  if (item.quantity <= 0) {
+  if (items.quantity <= 0) {
   throw new Error("Invalid quantity");
 }
   let totalAmount = 0;
