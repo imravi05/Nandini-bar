@@ -11,6 +11,7 @@ import {
   Pencil,
   Trash2,
   RotateCcw,
+  PackageOpen,
 } from "lucide-react";
 import { getReadableRef } from "./AuditDiffDrawer";
 
@@ -47,6 +48,11 @@ const ACTION_CONFIG = {
   },
   VOID: {
     icon: RotateCcw,
+    badge: "bg-orange-100 text-orange-700",
+    dot: "bg-orange-400",
+  },
+  PARCEL: {
+    icon: PackageOpen,
     badge: "bg-orange-100 text-orange-700",
     dot: "bg-orange-400",
   },

@@ -1,5 +1,5 @@
 import React from "react";
-import { Minus, Plus, Trash2, ShoppingBag, CheckCircle } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, CheckCircle, Package } from "lucide-react";
 
 const POSCart = ({
   cart,
@@ -8,6 +8,8 @@ const POSCart = ({
   onRemove,
   onCheckout,
   isSubmitting,
+  isParcel,
+  onToggleParcel,
 }) => {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const isEmpty = cart.length === 0;
@@ -99,7 +101,30 @@ const POSCart = ({
 
       {/* Footer — sticky total + checkout */}
       <div className="px-3 sm:px-5 pb-3 sm:pb-5 pt-3 border-t border-gray-100 shrink-0 space-y-3">
-        <div className="flex justify-between items-center">
+        
+        {/* Parcel Toggle */}
+        <div className="flex justify-between items-center bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100 transition-colors">
+          <div className="flex items-center gap-2">
+            <Package size={16} className={isParcel ? "text-orange-500" : "text-slate-400"} />
+            <span className={`text-sm font-semibold transition-colors ${isParcel ? "text-orange-600" : "text-slate-600"}`}>
+              Parcel Sale
+            </span>
+          </div>
+          <button
+            onClick={onToggleParcel}
+            className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${
+              isParcel ? "bg-orange-500" : "bg-slate-300"
+            }`}
+          >
+            <div
+              className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform absolute ${
+                isParcel ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex justify-between items-center px-1">
           <span className="text-sm font-semibold text-slate-500">Total</span>
           <span className="text-2xl font-extrabold text-slate-900">
             ₹{total.toFixed(0)}
@@ -109,7 +134,9 @@ const POSCart = ({
         <button
           disabled={isEmpty || isSubmitting}
           onClick={onCheckout}
-          className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed btn-brand"
+          className={`w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+            isParcel ? "bg-orange-500 hover:bg-orange-600 shadow-orange-500/20" : "btn-brand"
+          }`}
         >
           {isSubmitting ? (
             <>
@@ -118,8 +145,8 @@ const POSCart = ({
             </>
           ) : (
             <>
-              <CheckCircle size={17} />
-              Complete Sale
+              {isParcel ? <Package size={17} /> : <CheckCircle size={17} />}
+              {isParcel ? "Complete Parcel Sale" : "Complete Sale"}
             </>
           )}
         </button>

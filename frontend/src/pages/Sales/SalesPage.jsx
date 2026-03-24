@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 import { useInventory } from "../../hooks/queries/useInventory";
 import { useCreateSale } from "../../hooks/queries/useSales";
+import { useCreateParcelSale } from "../../hooks/queries/useParcel";
 import POSProductGrid from "../../components/Sales/POSProductGrid";
 import POSCart from "../../components/Sales/POSCart";
 import SaleSuccessOverlay from "../../components/Sales/SaleSuccessOverlay";
@@ -23,10 +24,12 @@ export default function SalesPage() {
   }, [isError, error]);
   
   const createSaleMutation = useCreateSale();
+  const createParcelMutation = useCreateParcelSale();
 
   const [cart, setCart] = useState([]); // [{ productId, name, category, unitSize, price, stock, quantity }]
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSale, setLastSale] = useState(null); // holds the completed sale for Undo overlay
+  const [isParcel, setIsParcel] = useState(false); // tracks if sale is a parcel to trigger different endpoint
 
   /* ─── Fetch live inventory handled by React Query ─── */
 
@@ -83,14 +86,19 @@ export default function SalesPage() {
     if (cart.length === 0) return;
     setIsSubmitting(true);
     
-    createSaleMutation.mutate(cart, {
+    // Choose the mutation based on whether the parcel toggle is active or not
+    const mutation = isParcel ? createParcelMutation : createSaleMutation;
+    
+    mutation.mutate(cart, {
       onSuccess: (sale) => {
-        setLastSale(sale); // triggers the success overlay
+        // Tag it with isParcel so the SuccessOverlay knows which kind of sale just completed visually
+        setLastSale({ ...sale, isParcel });
         setCart([]); // clear the cart
+        setIsParcel(false); // Reset toggle for next customer
       },
       onError: (error) => {
         toast.error(
-          error.response?.data?.message || "Sale failed. Please try again.",
+          error.response?.data?.message || `${isParcel ? "Parcel sale" : "Sale"} failed. Please try again.`
         );
       },
       onSettled: () => {
@@ -150,6 +158,8 @@ export default function SalesPage() {
               onRemove={remove}
               onCheckout={handleCheckout}
               isSubmitting={isSubmitting}
+              isParcel={isParcel}
+              onToggleParcel={() => setIsParcel((p) => !p)}
             />
           </div>
         </div>
