@@ -312,6 +312,7 @@ export const deleteSale = async (saleId) => {
 
 
 export const parcelSale = async(data) =>{
+  const {items} = data;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
