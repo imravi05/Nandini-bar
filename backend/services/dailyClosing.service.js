@@ -18,15 +18,14 @@ export const closeDay = async () => {
   }
 
   return prisma.$transaction(async (tx) => {
-
     /* ---------------- FETCH TODAY SALES ---------------- */
 
     const sales = await tx.sale.findMany({
       where: {
         saleDate: {
           gte: today,
-          lt: tomorrow
-        }
+          lt: tomorrow,
+        },
       },
       include: { items: true },
     });
@@ -45,7 +44,12 @@ export const closeDay = async () => {
           productMap[item.productId] = {
             soldQuantity: 0,
             saleAmount: 0,
+            parcelQty: 0,
           };
+        }
+
+        if (sale.saleNumber && sale.saleNumber.startsWith("PARCEL-")) {
+          productMap[item.productId].parcelQty += item.quantity;
         }
 
         productMap[item.productId].soldQuantity += item.quantity;
@@ -83,7 +87,6 @@ export const closeDay = async () => {
 
       closingId = updated.id;
     } else {
-
       const closing = await tx.dailyClosing.create({
         data: {
           date: today,
@@ -100,7 +103,6 @@ export const closeDay = async () => {
     /* ---------------- PRODUCT LEVEL SUMMARY ---------------- */
 
     for (const inv of inventories) {
-
       // Defensive check (important)
       if (!inv.product) {
         console.warn("Skipping inventory without product:", inv.productId);
@@ -126,6 +128,7 @@ export const closeDay = async () => {
           receivedStock: 0,
 
           totalStock: inv.quantity + soldData.soldQuantity,
+          parcel: soldData.parcelQty || 0,
 
           soldQuantity: soldData.soldQuantity,
           saleAmount: soldData.saleAmount,
@@ -175,13 +178,11 @@ export const closeDay = async () => {
   });
 };
 
-
 /* ------------------------------------------------ */
 /* GET DAILY REPORT */
 /* ------------------------------------------------ */
 
 export const getDailyReport = async (date) => {
-
   const selectedDate = new Date(date);
   selectedDate.setHours(0, 0, 0, 0);
 
@@ -195,18 +196,15 @@ export const getDailyReport = async (date) => {
   });
 };
 
-
 /* ------------------------------------------------ */
 /* REOPEN DAY */
 /* ------------------------------------------------ */
 
 export const reopenDay = async (date) => {
-
   const selectedDate = new Date(date);
   selectedDate.setHours(0, 0, 0, 0);
 
   return prisma.$transaction(async (tx) => {
-
     const closing = await tx.dailyClosing.findUnique({
       where: { date: selectedDate },
     });

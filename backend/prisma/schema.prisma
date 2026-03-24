@@ -95,7 +95,7 @@ model DailyProductSummary {
   productId       String
   openingStock    Int
   receivedStock   Int 
-  parcel          Int
+  parcel          Int      @default(0)
   totalStock      Int
   soldQuantity    Int
   saleAmount      Float
