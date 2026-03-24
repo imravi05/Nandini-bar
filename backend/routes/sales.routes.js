@@ -2,9 +2,11 @@ import express from "express";
 import {
   createSale,
   getSales,
-  deleteSale
+  deleteSale,
+  
 } from "../controllers/sales.controller.js";
 
+import { parcelSale } from "../services/sales.service.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import {
   createSaleSchema,
@@ -50,4 +52,12 @@ router.delete(
   validate(saleIdParamSchema, "params"),
   deleteSale
 );
+router.post(
+  "/parcel",
+  authenticate,
+  authorizeRoles("ADMIN", "CASHIER"),
+  validate(createSaleSchema),
+  parcelSale
+)
+
 export default router;
