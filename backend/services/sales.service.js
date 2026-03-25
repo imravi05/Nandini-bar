@@ -84,6 +84,8 @@ export const createSale = async (items) => {
     });
 
     return sale;
+  }, {
+    timeout: 15000,
   });
 };
 
@@ -254,6 +256,8 @@ export const updateSale = async (saleId, newItems) => {
     });
 
     return updatedSale;
+  }, {
+    timeout: 15000,
   });
 };
 
@@ -307,6 +311,8 @@ export const deleteSale = async (saleId) => {
     });
 
     return { message: "Sale deleted and stock restored" };
+  }, {
+    timeout: 15000,
   });
 };
 
@@ -350,7 +356,7 @@ export const parcelSale = async(items) =>{
 
     const sale = await tx.sale.create({
       data: {
-        saleNumber: `parcel-${Date.now()}`,
+        saleNumber: `PARCEL-${Date.now()}`,
         totalAmount,
         status: "OPEN",
       },
@@ -395,6 +401,7 @@ export const parcelSale = async(items) =>{
     });
 
     return sale;
+  }, {
+    timeout: 15000,
   });
-
 };
