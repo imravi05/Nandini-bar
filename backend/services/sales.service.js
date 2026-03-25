@@ -9,7 +9,6 @@ export const createSale = async (items) => {
   const closing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
-
   if (closing && closing.status === "CLOSED") {
     throw new Error("Sales not allowed. Day already closed.");
   }
@@ -335,8 +334,7 @@ export const parcelSale = async (items) => {
   const closing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
-
-  if (closing?.status === "CLOSED") {
+  if (closing && closing.status === "CLOSED") {
     throw new Error("Sales not allowed. Day already closed.");
   }
 

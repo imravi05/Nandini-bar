@@ -33,7 +33,7 @@ export const loginUser = async (email, password) => {
   }
 
   const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-    expiresIn: "8h",
+    expiresIn: "7d",
   });
 
   return { token, name: user.name };
