@@ -8,7 +8,7 @@ const parcelService = {
       quantity: i.quantity,
       unitPrice: i.price, // backend expects unitPrice for parcel calculation
     }));
-    const res = await api.post("/parcels/parcel", { items });
+    const res = await api.post("/sales/parcel", { items });
     return res.data.data; // returns the created parcel sale
   },
 };

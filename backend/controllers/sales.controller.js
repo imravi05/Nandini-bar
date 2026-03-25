@@ -57,3 +57,13 @@ export const deleteSale = async (req, res, next) => {
     next(error);
   }
 };
+
+export const parcelSale = async (req, res, next) => {
+  try {
+    const sale = await salesService.parcelSale(req.body.items); 
+    res.status(201).json({ success: true, data: sale });
+  } catch (error) {
+
+    next(error);
+  }
+};

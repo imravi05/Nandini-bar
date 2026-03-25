@@ -311,8 +311,8 @@ export const deleteSale = async (saleId) => {
 };
 
 
-export const parcelSale = async(data) =>{
-  const {items} = data;
+export const parcelSale = async(items) =>{
+ 
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -321,7 +321,7 @@ export const parcelSale = async(data) =>{
     where: { date: today },
   });
 
-  if (closing && closing.status === "CLOSED") {
+  if (closing?.status === "CLOSED") {
     throw new Error("Sales not allowed. Day already closed.");
   }
 
@@ -394,7 +394,7 @@ export const parcelSale = async(data) =>{
       },
     });
 
-    return sale;
+    return createdSale;
   });
 
 };

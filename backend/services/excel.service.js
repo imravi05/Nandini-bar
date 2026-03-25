@@ -62,7 +62,7 @@ export const generateDailyExcel = async (closingData) => {
       item.openingStock,
       item.receivedStock,
       item.totalStock,
-      item.parcelStock,
+      item.parcel,
       item.totalStock,
       item.soldQuantity,
       item.closingStock,
