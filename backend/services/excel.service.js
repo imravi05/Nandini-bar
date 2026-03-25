@@ -53,6 +53,7 @@ export const generateDailyExcel = async (closingData) => {
   let totalSaleAmount = 0;
   let totalSoldQty = 0;
   let totalClosingValue = 0;
+  let totalParcelQty = 0;
 
   const categoryTotals = {};
 
@@ -82,6 +83,7 @@ export const generateDailyExcel = async (closingData) => {
     totalSaleAmount += item.saleAmount;
     totalSoldQty += item.soldQuantity;
     totalClosingValue += item.closingValue;
+    totalParcelQty += item.parcel;
 
     const category = item.product.category;
 
@@ -100,9 +102,12 @@ export const generateDailyExcel = async (closingData) => {
     "",
     "",
     "",
-    totalSoldQty,
-    totalSaleAmount,
+    totalParcelQty,
     "",
+    totalSoldQty,
+    "",
+    totalSaleAmount,
+    // "",
     totalClosingValue,
   ]);
 
