@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Beer, Wine, GlassWater, CupSoda, Beaker } from "lucide-react";
 
 // Assign a consistent color per category
 const CATEGORY_COLORS = {
@@ -7,48 +8,56 @@ const CATEGORY_COLORS = {
     border: "border-amber-200",
     text: "text-amber-800",
     dot: "bg-amber-400",
+    icon: Wine,
   },
   beer: {
     bg: "bg-lime-50",
     border: "border-lime-300",
     text: "text-lime-800",
     dot: "bg-lime-500",
+    icon: Beer,
   },
   vodka: {
     bg: "bg-sky-50",
     border: "border-sky-200",
     text: "text-sky-800",
     dot: "bg-sky-400",
+    icon: GlassWater,
   },
   rum: {
     bg: "bg-orange-50",
     border: "border-orange-200",
     text: "text-orange-800",
     dot: "bg-orange-400",
+    icon: Wine,
   },
   gin: {
     bg: "bg-teal-50",
     border: "border-teal-200",
     text: "text-teal-800",
     dot: "bg-teal-400",
+    icon: GlassWater,
   },
   brandy: {
     bg: "bg-red-50",
     border: "border-red-200",
     text: "text-red-800",
     dot: "bg-red-400",
+    icon: Wine,
   },
   wine: {
     bg: "bg-purple-50",
     border: "border-purple-200",
     text: "text-purple-800",
     dot: "bg-purple-400",
+    icon: Wine,
   },
   alcopop: {
     bg: "bg-pink-50",
     border: "border-pink-200",
     text: "text-pink-800",
     dot: "bg-pink-400",
+    icon: CupSoda,
   },
 };
 
@@ -57,6 +66,7 @@ const DEFAULT_COLOR = {
   border: "border-slate-200",
   text: "text-slate-700",
   dot: "bg-slate-400",
+  icon: Beaker,
 };
 
 const getColor = (category) =>
@@ -170,8 +180,8 @@ const POSProductGrid = ({ inventory, onAdd }) => {
                     : `${color.bg} ${color.border} active:scale-95 cursor-pointer`
                 }`}
               >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${color.dot}`}>
-                  {getInitials(product?.name)}
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white ${color.dot}`}>
+                  <color.icon size={12} strokeWidth={2.5} />
                 </div>
                 <p className={`text-[9px] font-bold uppercase ${color.text} line-clamp-2 leading-tight w-full`}>
                   {product?.name}
@@ -221,8 +231,8 @@ const POSProductGrid = ({ inventory, onAdd }) => {
                     : `${color.bg} ${color.border} hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer`
                 }`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white ${color.dot}`}>
-                  {getInitials(product?.name)}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${color.dot}`}>
+                  <color.icon size={16} strokeWidth={2.5} />
                 </div>
                 <div className="leading-tight">
                   <p className={`text-xs font-bold uppercase ${color.text} line-clamp-2 leading-snug`}>
