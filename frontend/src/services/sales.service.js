@@ -17,7 +17,7 @@ export const salesService = {
     return res.data;
   },
 };
-export const  parcelService = {
+export const parcelService = {
   /** POST /api/sales/parcel — body: { items: [{ productId, quantity }] } */
   createParcel: async (cartItems) => {
     const items = cartItems.map((i) => ({
@@ -26,11 +26,9 @@ export const  parcelService = {
     }));
     const res = await api.post("/sales/parcel", { items });
     return res.data.data;
-  }
-//   deleteParcel: async (saleId) => {
-//     const res = await api.delete(`/sales/${saleId}`);
-//     return res.data;  
-// }
+  },
+  //   deleteParcel: async (saleId) => {
+  //     const res = await api.delete(`/sales/${saleId}`);
+  //     return res.data;
+  // }
 };
-
-

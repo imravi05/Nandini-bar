@@ -3,26 +3,34 @@ import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useInventory } from "../../hooks/queries/useInventory";
-import { useCreateSale } from "../../hooks/queries/useSales";
-import { useCreateParcelSale } from "../../hooks/queries/useParcel";
+import { useCreateSale, useCreateParcelSale } from "../../hooks/queries/useSales";
 import POSProductGrid from "../../components/Sales/POSProductGrid";
 import POSCart from "../../components/Sales/POSCart";
 import SaleSuccessOverlay from "../../components/Sales/SaleSuccessOverlay";
 
 export default function SalesPage() {
-  const { data: inventoryData, isLoading, isError, error, refetch: fetchInventory } = useInventory();
-  const inventory = Array.isArray(inventoryData?.data) 
-    ? inventoryData.data 
-    : (Array.isArray(inventoryData) ? inventoryData : []);
+  const {
+    data: inventoryData,
+    isLoading,
+    isError,
+    error,
+    refetch: fetchInventory,
+  } = useInventory();
+  const inventory = Array.isArray(inventoryData?.data)
+    ? inventoryData.data
+    : Array.isArray(inventoryData)
+      ? inventoryData
+      : [];
 
   useEffect(() => {
     if (isError) {
       console.error("Sales Terminal Inventory Error:", error);
-      const serverMsg = error.response?.data?.message || "Failed to load terminal inventory";
+      const serverMsg =
+        error.response?.data?.message || "Failed to load terminal inventory";
       toast.error(serverMsg);
     }
   }, [isError, error]);
-  
+
   const createSaleMutation = useCreateSale();
   const createParcelMutation = useCreateParcelSale();
 
@@ -85,10 +93,10 @@ export default function SalesPage() {
   const handleCheckout = () => {
     if (cart.length === 0) return;
     setIsSubmitting(true);
-    
+
     // Choose the mutation based on whether the parcel toggle is active or not
     const mutation = isParcel ? createParcelMutation : createSaleMutation;
-    
+
     mutation.mutate(cart, {
       onSuccess: (sale) => {
         // Tag it with isParcel so the SuccessOverlay knows which kind of sale just completed visually
@@ -98,12 +106,13 @@ export default function SalesPage() {
       },
       onError: (error) => {
         toast.error(
-          error.response?.data?.message || `${isParcel ? "Parcel sale" : "Sale"} failed. Please try again.`
+          error.response?.data?.message ||
+            `${isParcel ? "Parcel sale" : "Sale"} failed. Please try again.`,
         );
       },
       onSettled: () => {
         setIsSubmitting(false);
-      }
+      },
     });
   };
 
