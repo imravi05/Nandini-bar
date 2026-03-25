@@ -18,16 +18,6 @@ export const useCreateSale = () => {
     },
   });
 };
-export const useCreateParcelSale = () => {
-  const queryClient = useQueryClient();
-  return useMutation({  
-    mutationFn: parcelService.createParcel,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['daily-sales'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-    },
-  });
-}
 
 export const useDeleteSale = () => {
   const queryClient = useQueryClient();
