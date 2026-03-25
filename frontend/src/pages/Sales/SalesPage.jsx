@@ -152,14 +152,14 @@ export default function SalesPage() {
           Loading inventory...
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-2 sm:p-4 gap-2 sm:gap-4">
-          {/* TOP/LEFT: Product Grid */}
-          <div className="flex-[6] lg:flex-[7] overflow-hidden flex flex-col">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-2 sm:p-4 gap-2 sm:gap-4 min-h-0">
+          {/* TOP/LEFT: Product Grid — auto height on mobile (horizontal scroll), flex-[7] on desktop */}
+          <div className="overflow-hidden flex flex-col min-h-0 flex-none lg:flex-[7]">
             <POSProductGrid inventory={inventory} onAdd={addToCart} />
           </div>
 
-          {/* BOTTOM/RIGHT: Cart */}
-          <div className="flex-[4] lg:flex-[3] w-full lg:w-auto lg:min-w-[300px] overflow-hidden">
+          {/* BOTTOM/RIGHT: Cart — takes all remaining space on mobile, flex-[3] on desktop */}
+          <div className="flex-1 lg:flex-[3] lg:min-w-[300px] overflow-hidden flex flex-col min-h-0">
             <POSCart
               cart={cart}
               onIncrease={increase}

@@ -15,7 +15,7 @@ const POSCart = ({
   const isEmpty = cart.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Cart Header */}
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-100 shrink-0">
         <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">

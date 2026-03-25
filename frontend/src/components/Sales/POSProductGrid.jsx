@@ -94,36 +94,32 @@ const POSProductGrid = ({ inventory, onAdd }) => {
   }, [inventory, activeCategory, search]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Search */}
-      <div className="px-1 pb-3 shrink-0">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
+      {/* Search + Category tabs row on mobile */}
+      <div className="shrink-0 px-1 pb-2 flex flex-col gap-2">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search drink..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none transition focus-brand"
+          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm outline-none transition focus-brand"
         />
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-2 flex-wrap pb-3 shrink-0">
+      <div className="flex gap-1.5 flex-wrap pb-2 shrink-0">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border capitalize transition-all ${
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold border capitalize transition-all ${
               activeCategory === cat
                 ? "text-white border-transparent"
                 : "bg-white text-slate-600 border-gray-200 hover:text-white"
             }`}
             style={
               activeCategory === cat
-                ? {
-                    backgroundColor: "#00ADB5",
-                    borderColor: "#00ADB5",
-                    color: "white",
-                  }
+                ? { backgroundColor: "#00ADB5", borderColor: "#00ADB5", color: "white" }
                 : {}
             }
             onMouseEnter={(e) => {
@@ -144,9 +140,57 @@ const POSProductGrid = ({ inventory, onAdd }) => {
         ))}
       </div>
 
-      {/* Product grid — scrollable */}
-      <div className="overflow-y-auto flex-1 pr-1">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3">
+      {/* ── MOBILE: horizontal scroll row of compact cards ── */}
+      <div className="lg:hidden overflow-x-auto flex-none pb-1">
+        <div className="flex gap-2 w-max">
+          {filtered.length === 0 && (
+            <p className="text-slate-400 text-sm py-2 px-1">No products found.</p>
+          )}
+          {filtered.map((inv) => {
+            const product = inv.product;
+            const color = getColor(product?.category);
+            const outOfStock = inv.quantity <= 0;
+            return (
+              <button
+                key={inv.id}
+                disabled={outOfStock}
+                onClick={() =>
+                  onAdd({
+                    productId: product.id,
+                    name: product.name,
+                    category: product.category,
+                    unitSize: product.unitSize,
+                    price: product.basePrice,
+                    stock: inv.quantity,
+                  })
+                }
+                className={`relative flex flex-col items-center justify-center gap-0.5 p-2 rounded-xl border-2 text-center transition-all select-none w-[80px] shrink-0 ${
+                  outOfStock
+                    ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200"
+                    : `${color.bg} ${color.border} active:scale-95 cursor-pointer`
+                }`}
+              >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${color.dot}`}>
+                  {getInitials(product?.name)}
+                </div>
+                <p className={`text-[9px] font-bold uppercase ${color.text} line-clamp-2 leading-tight w-full`}>
+                  {product?.name}
+                </p>
+                <p className="text-[10px] font-extrabold text-slate-800">₹{product?.basePrice?.toFixed(0)}</p>
+                <span className={`absolute top-1 right-1 text-[8px] font-semibold px-1 rounded-full ${
+                  outOfStock ? "bg-red-100 text-red-500" : "bg-white/70 text-slate-500"
+                }`}>
+                  {outOfStock ? "OUT" : `×${inv.quantity}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── DESKTOP: vertical scrollable grid ── */}
+      <div className="hidden lg:block overflow-y-auto flex-1 pr-1">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3">
           {filtered.length === 0 && (
             <p className="col-span-full text-center text-slate-400 py-10 text-sm">
               No products found.
@@ -177,36 +221,19 @@ const POSProductGrid = ({ inventory, onAdd }) => {
                     : `${color.bg} ${color.border} hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer`
                 }`}
               >
-                {/* Initials avatar */}
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white ${color.dot}`}
-                >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white ${color.dot}`}>
                   {getInitials(product?.name)}
                 </div>
-
                 <div className="leading-tight">
-                  <p
-                    className={`text-xs font-bold uppercase ${color.text} line-clamp-2 leading-snug`}
-                  >
+                  <p className={`text-xs font-bold uppercase ${color.text} line-clamp-2 leading-snug`}>
                     {product?.name}
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    {product?.unitSize}
-                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{product?.unitSize}</p>
                 </div>
-
-                <p className="text-xs font-extrabold text-slate-800">
-                  ₹{product?.basePrice?.toFixed(0)}
-                </p>
-
-                {/* Stock badge */}
-                <span
-                  className={`absolute top-2 right-2 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                    outOfStock
-                      ? "bg-red-100 text-red-500"
-                      : "bg-white/70 text-slate-500"
-                  }`}
-                >
+                <p className="text-xs font-extrabold text-slate-800">₹{product?.basePrice?.toFixed(0)}</p>
+                <span className={`absolute top-2 right-2 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                  outOfStock ? "bg-red-100 text-red-500" : "bg-white/70 text-slate-500"
+                }`}>
                   {outOfStock ? "OUT" : `×${inv.quantity}`}
                 </span>
               </button>
