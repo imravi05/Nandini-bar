@@ -3,10 +3,10 @@ import {
   createSale,
   getSales,
   deleteSale,
-  
+  parcelSale
 } from "../controllers/sales.controller.js";
 
-import { parcelSale } from "../services/sales.service.js";
+
 import { validate } from "../middlewares/validate.middleware.js";
 import {
   createSaleSchema,

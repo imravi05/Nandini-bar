@@ -394,7 +394,7 @@ export const parcelSale = async(items) =>{
       },
     });
 
-    return createdSale;
+    return sale;
   });
 
 };

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import salesService from '../../services/sales.service';
+// import salesService from '../../services/sales.service';
+import { parcelService,salesService } from '../../services/sales.service'; 
 
 const SALE_KEYS = {
   all: ['sales'],
@@ -17,6 +18,16 @@ export const useCreateSale = () => {
     },
   });
 };
+export const useCreateParcelSale = () => {
+  const queryClient = useQueryClient();
+  return useMutation({  
+    mutationFn: parcelService.createParcel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
+  });
+}
 
 export const useDeleteSale = () => {
   const queryClient = useQueryClient();
