@@ -14,79 +14,85 @@ export const createSale = async (items) => {
     throw new Error("Sales not allowed. Day already closed.");
   }
 
-  return prisma.$transaction(async (tx) => {
-    let totalAmount = 0;
+  return prisma.$transaction(
+    async (tx) => {
+      const productIds = items.map((i) => i.productId);
 
-    for (const item of items) {
-      const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId },
-      });
+      // 1. Bulk Fetch (Trips: 1)
+      const [products, inventories] = await Promise.all([
+        tx.product.findMany({ where: { id: { in: productIds } } }),
+        tx.shopInventory.findMany({ where: { productId: { in: productIds } } }),
+      ]);
 
-      if (!inventory || inventory.quantity < item.quantity) {
-        throw new Error("Insufficient stock");
+      const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+      const inventoryMap = Object.fromEntries(
+        inventories.map((inv) => [inv.productId, inv]),
+      );
+
+      // 2. Validation (In-memory - 0 trips)
+      let totalAmount = 0;
+      for (const item of items) {
+        const product = productMap[item.productId];
+        const inventory = inventoryMap[item.productId];
+
+        if (!product) throw new Error("Product not found");
+        if (!inventory || inventory.quantity < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        totalAmount += item.quantity * product.basePrice;
       }
 
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
-
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      totalAmount += item.quantity * product.basePrice;
-    }
-
-    const sale = await tx.sale.create({
-      data: {
-        saleNumber: `SALE-${Date.now()}`,
-        totalAmount,
-        status: "OPEN",
-      },
-    });
-
-    for (const item of items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
-
-      await tx.saleItem.create({
+      // 3. Create Sale (Trip: 1)
+      const sale = await tx.sale.create({
         data: {
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice,
+          saleNumber: `SALE-${Date.now()}`,
+          totalAmount,
+          status: "OPEN",
         },
       });
 
-      await tx.shopInventory.updateMany({
-        where: { productId: item.productId },
+      // 4. Batch Create Items (Trip: 1)
+      const saleItemsData = items.map((item) => ({
+        saleId: sale.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: productMap[item.productId].basePrice,
+        totalPrice: item.quantity * productMap[item.productId].basePrice,
+      }));
+      await tx.saleItem.createMany({ data: saleItemsData });
+
+      // 5. Concurrent Stock Update (Trip: 1)
+      await Promise.all(
+        items.map((item) =>
+          tx.shopInventory.update({
+            where: { productId: item.productId },
+            data: { quantity: { decrement: item.quantity } },
+          }),
+        ),
+      );
+
+      const createdSale = await tx.sale.findUnique({
+        where: { id: sale.id },
+        include: { items: { include: { product: true } } },
+      });
+
+      // --- Create Audit Log for the new sale ---
+      await tx.auditLog.create({
         data: {
-          quantity: { decrement: item.quantity },
+          entityType: "Sale",
+          entityId: sale.id,
+          action: "CREATE_SALE",
+          newData: JSON.stringify(createdSale),
         },
       });
-    }
 
-    const createdSale = await tx.sale.findUnique({
-      where: { id: sale.id },
-      include: { items: { include: { product: true } } },
-    });
-
-    // --- Create Audit Log for the new sale ---
-    await tx.auditLog.create({
-      data: {
-        entityType: "Sale",
-        entityId: sale.id,
-        action: "CREATE_SALE",
-        newData: JSON.stringify(createdSale),
-      },
-    });
-
-    return sale;
-  }, {
-    timeout: 15000,
-  });
+      return sale;
+    },
+    {
+      timeout: 15000,
+    },
+  );
 };
 
 /* ---------------- GET ALL SALES ---------------- */
@@ -186,79 +192,82 @@ export const updateSale = async (saleId, newItems) => {
     throw new Error("Cannot modify sale. Day is closed.");
   }
 
-  return prisma.$transaction(async (tx) => {
-    // Restore previous stock
-    for (const item of sale.items) {
-      await tx.shopInventory.updateMany({
-        where: { productId: item.productId },
-        data: {
-          quantity: { increment: item.quantity },
-        },
-      });
-    }
-
-    // Delete old items
-    await tx.saleItem.deleteMany({
-      where: { saleId },
-    });
-
-    let totalAmount = 0;
-
-    // Create new items
-    for (const item of newItems) {
-      const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId },
-      });
-
-      if (!inventory || inventory.quantity < item.quantity) {
-        throw new Error("Insufficient stock for update");
+  return prisma.$transaction(
+    async (tx) => {
+      // Restore previous stock
+      for (const item of sale.items) {
+        await tx.shopInventory.updateMany({
+          where: { productId: item.productId },
+          data: {
+            quantity: { increment: item.quantity },
+          },
+        });
       }
 
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
+      // Delete old items
+      await tx.saleItem.deleteMany({
+        where: { saleId },
       });
 
-      totalAmount += item.quantity * product.basePrice;
+      let totalAmount = 0;
 
-      await tx.saleItem.create({
+      // Create new items
+      for (const item of newItems) {
+        const inventory = await tx.shopInventory.findFirst({
+          where: { productId: item.productId },
+        });
+
+        if (!inventory || inventory.quantity < item.quantity) {
+          throw new Error("Insufficient stock for update");
+        }
+
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+        });
+
+        totalAmount += item.quantity * product.basePrice;
+
+        await tx.saleItem.create({
+          data: {
+            saleId,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: product.basePrice,
+            totalPrice: item.quantity * product.basePrice,
+          },
+        });
+
+        await tx.shopInventory.updateMany({
+          where: { productId: item.productId },
+          data: {
+            quantity: { decrement: item.quantity },
+          },
+        });
+      }
+
+      const updatedSale = await tx.sale.update({
+        where: { id: saleId },
+        data: { totalAmount },
+        include: { items: { include: { product: true } } },
+      });
+
+      // --- Create Audit Log for updated sale ---
+      await tx.auditLog.create({
         data: {
-          saleId,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice,
+          entityType: "Sale",
+          entityId: sale.id,
+          action: "UPDATE_SALE",
+          oldData: JSON.stringify(sale),
+          newData: JSON.stringify(updatedSale),
         },
       });
 
-      await tx.shopInventory.updateMany({
-        where: { productId: item.productId },
-        data: {
-          quantity: { decrement: item.quantity },
-        },
-      });
-    }
-
-    const updatedSale = await tx.sale.update({
-      where: { id: saleId },
-      data: { totalAmount },
-      include: { items: { include: { product: true } } },
-    });
-
-    // --- Create Audit Log for updated sale ---
-    await tx.auditLog.create({
-      data: {
-        entityType: "Sale",
-        entityId: sale.id,
-        action: "UPDATE_SALE",
-        oldData: JSON.stringify(sale),
-        newData: JSON.stringify(updatedSale),
-      },
-    });
-
-    return updatedSale;
-  }, {
-    timeout: 15000,
-  });
+      return updatedSale;
+    },
+    {
+      timeout: 15000,
+    },
+  );
 };
 
 /* ---------------- DELETE SALE ---------------- */
@@ -282,44 +291,44 @@ export const deleteSale = async (saleId) => {
     throw new Error("Cannot delete sale. Day is closed.");
   }
 
-  return prisma.$transaction(async (tx) => {
-    for (const item of sale.items) {
-      await tx.shopInventory.updateMany({
-        where: { productId: item.productId },
+  return prisma.$transaction(
+    async (tx) => {
+      for (const item of sale.items) {
+        await tx.shopInventory.updateMany({
+          where: { productId: item.productId },
+          data: {
+            quantity: { increment: item.quantity },
+          },
+        });
+      }
+
+      await tx.saleItem.deleteMany({
+        where: { saleId },
+      });
+
+      await tx.sale.delete({
+        where: { id: saleId },
+      });
+
+      // --- Create Audit Log for voided sale ---
+      await tx.auditLog.create({
         data: {
-          quantity: { increment: item.quantity },
+          entityType: "Sale",
+          entityId: sale.id,
+          action: "VOID_SALE",
+          oldData: JSON.stringify(sale),
         },
       });
-    }
 
-    await tx.saleItem.deleteMany({
-      where: { saleId },
-    });
-
-    await tx.sale.delete({
-      where: { id: saleId },
-    });
-
-    // --- Create Audit Log for voided sale ---
-    await tx.auditLog.create({
-      data: {
-        entityType: "Sale",
-        entityId: sale.id,
-        action: "VOID_SALE",
-        oldData: JSON.stringify(sale),
-      },
-    });
-
-    return { message: "Sale deleted and stock restored" };
-  }, {
-    timeout: 15000,
-  });
+      return { message: "Sale deleted and stock restored" };
+    },
+    {
+      timeout: 15000,
+    },
+  );
 };
 
-
-export const parcelSale = async(items) =>{
- 
-
+export const parcelSale = async (items) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -331,77 +340,83 @@ export const parcelSale = async(items) =>{
     throw new Error("Sales not allowed. Day already closed.");
   }
 
-  return prisma.$transaction(async (tx) => {
-    let totalAmount = 0;
+  return prisma.$transaction(
+    async (tx) => {
+      const productIds = items.map((i) => i.productId);
 
-    for (const item of items) {
-      const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId },
-      });
+      const [products, inventories] = await Promise.all([
+        tx.product.findMany({ where: { id: { in: productIds } } }),
+        tx.shopInventory.findMany({ where: { productId: { in: productIds } } }),
+      ]);
 
-      if (!inventory || inventory.quantity < item.quantity) {
-        throw new Error("Insufficient stock");
+      // Create maps for instant lookup in memory (no more DB queries!)
+      const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+      const inventoryMap = Object.fromEntries(
+        inventories.map((inv) => [inv.productId, inv]),
+      );
+
+      let totalAmount = 0;
+
+      for (const item of items) {
+        const inventory = inventoryMap[item.productId];
+        const product = productMap[item.productId];
+
+        if (!product) throw new Error("Product not found");
+        if (!inventory || inventory.quantity < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        totalAmount += item.quantity * product.basePrice;
       }
 
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
-
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      totalAmount += item.quantity * product.basePrice;
-    }
-
-    const sale = await tx.sale.create({
-      data: {
-        saleNumber: `PARCEL-${Date.now()}`,
-        totalAmount,
-        status: "OPEN",
-      },
-    });
-
-    for (const item of items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
-
-      await tx.saleItem.create({
+      // 3. Create Sale (Trip: 1)
+      const sale = await tx.sale.create({
         data: {
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice,
+          saleNumber: `PARCEL-${Date.now()}`,
+          totalAmount,
+          status: "OPEN",
         },
       });
 
-      await tx.shopInventory.updateMany({
-        where: { productId: item.productId },
+      // 4. Batch Create Items (Trip: 1)
+      const saleItemsData = items.map((item) => ({
+        saleId: sale.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: productMap[item.productId].basePrice,
+        totalPrice: item.quantity * productMap[item.productId].basePrice,
+      }));
+      await tx.saleItem.createMany({ data: saleItemsData });
+
+      // 5. Concurrent Stock Update (Trip: 1)
+      await Promise.all(
+        items.map((item) =>
+          tx.shopInventory.update({
+            where: { productId: item.productId },
+            data: { quantity: { decrement: item.quantity } },
+          }),
+        ),
+      );
+
+      const createdSale = await tx.sale.findUnique({
+        where: { id: sale.id },
+        include: { items: { include: { product: true } } },
+      });
+
+      // --- Create Audit Log for the new sale ---
+      await tx.auditLog.create({
         data: {
-          quantity: { decrement: item.quantity },
+          entityType: "parcelSale",
+          entityId: sale.id,
+          action: "CREATE_PARCEL_SALE",
+          newData: JSON.stringify(createdSale),
         },
       });
-    }
 
-    const createdSale = await tx.sale.findUnique({
-      where: { id: sale.id },
-      include: { items: { include: { product: true } } },
-    });
-
-    // --- Create Audit Log for the new sale ---
-    await tx.auditLog.create({
-      data: {
-        entityType: "parcelSale",
-        entityId: sale.id,
-        action: "CREATE_PARCEL_SALE",
-        newData: JSON.stringify(createdSale),
-      },
-    });
-
-    return sale;
-  }, {
-    timeout: 15000,
-  });
+      return sale;
+    },
+    {
+      timeout: 15000,
+    },
+  );
 };
