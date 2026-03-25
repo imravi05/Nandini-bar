@@ -4,76 +4,87 @@ import { generateDailyExcel } from "./excel.service.js";
 export const closeDay = async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
 
-  // Check existing closing
+  // Check existing closing (outside transaction)
   const existing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
-
-  if (existing && existing.status === "CLOSED") {
+  if (existing?.status === "CLOSED") {
     throw new Error("Day already closed");
   }
 
-  return prisma.$transaction(async (tx) => {
-    /* ---------------- FETCH TODAY SALES ---------------- */
-
-    const sales = await tx.sale.findMany({
-      where: {
-        saleDate: {
-          gte: today,
-          lt: tomorrow,
-        },
+  // Fetch sales and inventory outside transaction
+  const sales = await prisma.sale.findMany({
+    where: {
+      saleDate: {
+        gte: today,
+        lt: tomorrow,
       },
-      include: { items: true },
-    });
+    },
+    include: { items: true },
+  });
+  const inventories = await prisma.shopInventory.findMany({
+    include: { product: true },
+  });
 
-    let totalSalesAmount = 0;
-    let totalSalesQuantity = 0;
-    const productMap = {};
-
-    for (const sale of sales) {
-      totalSalesAmount += sale.totalAmount;
-
-      for (const item of sale.items) {
-        totalSalesQuantity += item.quantity;
-
-        if (!productMap[item.productId]) {
-          productMap[item.productId] = {
-            soldQuantity: 0,
-            saleAmount: 0,
-            parcelQty: 0,
-          };
-        }
-
-        if (sale.saleNumber && sale.saleNumber.startsWith("PARCEL-")) {
-          productMap[item.productId].parcelQty += item.quantity;
-        }
-
-        productMap[item.productId].soldQuantity += item.quantity;
-        productMap[item.productId].saleAmount += item.totalPrice;
+  // Calculate sales/productMap
+  let totalSalesAmount = 0;
+  let totalSalesQuantity = 0;
+  const productMap = {};
+  for (const sale of sales) {
+    totalSalesAmount += sale.totalAmount;
+    for (const item of sale.items) {
+      totalSalesQuantity += item.quantity;
+      if (!productMap[item.productId]) {
+        productMap[item.productId] = {
+          soldQuantity: 0,
+          saleAmount: 0,
+          parcelQty: 0,
+        };
       }
+      if (sale.saleNumber?.startsWith("PARCEL-")) {
+        productMap[item.productId].parcelQty += item.quantity;
+      }
+      productMap[item.productId].soldQuantity += item.quantity;
+      productMap[item.productId].saleAmount += item.totalPrice;
     }
+  }
 
-    /* ---------------- FETCH INVENTORY ---------------- */
-
-    const inventories = await tx.shopInventory.findMany({
-      include: { product: true },
+  // Prepare product summaries for bulk create
+  let totalClosingValue = 0;
+  const productSummaries = [];
+  for (const inv of inventories) {
+    if (!inv.product) {
+      console.warn("Skipping inventory without product:", inv.productId);
+      continue;
+    }
+    const soldData = productMap[inv.productId] || {
+      soldQuantity: 0,
+      saleAmount: 0,
+      parcelQty: 0,
+    };
+    const closingValue = inv.quantity * inv.product.basePrice;
+    totalClosingValue += closingValue;
+    productSummaries.push({
+      productId: inv.productId,
+      openingStock: inv.quantity + soldData.soldQuantity,
+      receivedStock: 0,
+      totalStock: inv.quantity + soldData.soldQuantity,
+      parcel: soldData.parcelQty || 0,
+      soldQuantity: soldData.soldQuantity,
+      saleAmount: soldData.saleAmount,
+      closingStock: inv.quantity,
+      closingValue,
     });
+  }
 
-    let totalClosingValue = 0;
+  // Transaction: create/update closing, delete summaries, bulk create summaries, update closing value, audit log
+  const fullClosing = await prisma.$transaction(async (tx) => {
     let closingId;
-
-    /* ---------------- CREATE OR UPDATE CLOSING ---------------- */
-
     if (existing) {
-      // Day was reopened earlier
-      await tx.dailyProductSummary.deleteMany({
-        where: { dailyClosingId: existing.id },
-      });
-
+      await tx.dailyProductSummary.deleteMany({ where: { dailyClosingId: existing.id } });
       const updated = await tx.dailyClosing.update({
         where: { id: existing.id },
         data: {
@@ -84,7 +95,6 @@ export const closeDay = async () => {
           revisionNumber: existing.revisionNumber + 1,
         },
       });
-
       closingId = updated.id;
     } else {
       const closing = await tx.dailyClosing.create({
@@ -96,57 +106,23 @@ export const closeDay = async () => {
           status: "CLOSED",
         },
       });
-
       closingId = closing.id;
     }
 
-    /* ---------------- PRODUCT LEVEL SUMMARY ---------------- */
-
-    for (const inv of inventories) {
-      // Defensive check (important)
-      if (!inv.product) {
-        console.warn("Skipping inventory without product:", inv.productId);
-        continue;
-      }
-
-      const soldData = productMap[inv.productId] || {
-        soldQuantity: 0,
-        saleAmount: 0,
-      };
-
-      const closingValue = inv.quantity * inv.product.basePrice;
-      totalClosingValue += closingValue;
-
-      await tx.dailyProductSummary.create({
-        data: {
+    // Bulk create product summaries
+    if (productSummaries.length > 0) {
+      await tx.dailyProductSummary.createMany({
+        data: productSummaries.map((summary) => ({
+          ...summary,
           dailyClosingId: closingId,
-          productId: inv.productId,
-
-          openingStock: inv.quantity + soldData.soldQuantity,
-
-          // since purchase module not implemented
-          receivedStock: 0,
-
-          totalStock: inv.quantity + soldData.soldQuantity,
-          parcel: soldData.parcelQty || 0,
-
-          soldQuantity: soldData.soldQuantity,
-          saleAmount: soldData.saleAmount,
-
-          closingStock: inv.quantity,
-          closingValue,
-        },
+        })),
       });
     }
-
-    /* ---------------- UPDATE TOTAL CLOSING VALUE ---------------- */
 
     await tx.dailyClosing.update({
       where: { id: closingId },
       data: { totalClosingValue },
     });
-
-    /* ---------------- FETCH FULL REPORT ---------------- */
 
     const fullClosing = await tx.dailyClosing.findUnique({
       where: { id: closingId },
@@ -157,8 +133,6 @@ export const closeDay = async () => {
       },
     });
 
-    /* ---------------- AUDIT LOG ---------------- */
-
     await tx.auditLog.create({
       data: {
         entityType: "DailyClosing",
@@ -168,14 +142,14 @@ export const closeDay = async () => {
       },
     });
 
-    /* ---------------- GENERATE EXCEL ---------------- */
-
-    setImmediate(async () => {
-      await generateDailyExcel(fullClosing);
-    });
-
     return fullClosing;
   });
+
+  // Generate Excel outside transaction
+  setImmediate(async () => {
+    await generateDailyExcel(fullClosing);
+  });
+  return fullClosing;
 };
 
 /* ------------------------------------------------ */
