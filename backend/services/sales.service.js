@@ -9,34 +9,30 @@ export const createSale = async (items) => {
   const closing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
-
   if (closing && closing.status === "CLOSED") {
     throw new Error("Sales not allowed. Day already closed.");
   }
 
+  // Batch fetch products and inventories
+  const productIds = items.map(item => item.productId);
+  const [products, inventories] = await Promise.all([
+    prisma.product.findMany({ where: { id: { in: productIds } } }),
+    prisma.shopInventory.findMany({ where: { productId: { in: productIds } } }),
+  ]);
+  const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+  const inventoryMap = Object.fromEntries(inventories.map(inv => [inv.productId, inv]));
+
+  // Validate and calculate totalAmount
+  let totalAmount = 0;
+  for (const item of items) {
+    const product = productMap[item.productId];
+    const inventory = inventoryMap[item.productId];
+    if (!product) throw new Error(`Product not found: ${item.productId}`);
+    if (!inventory || inventory.quantity < item.quantity) throw new Error(`Insufficient stock for product: ${item.productId}`);
+    totalAmount += item.quantity * product.basePrice;
+  }
+
   return prisma.$transaction(async (tx) => {
-    let totalAmount = 0;
-
-    for (const item of items) {
-      const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId },
-      });
-
-      if (!inventory || inventory.quantity < item.quantity) {
-        throw new Error("Insufficient stock");
-      }
-
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
-
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      totalAmount += item.quantity * product.basePrice;
-    }
-
     const sale = await tx.sale.create({
       data: {
         saleNumber: `SALE-${Date.now()}`,
@@ -45,28 +41,24 @@ export const createSale = async (items) => {
       },
     });
 
-    for (const item of items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
+    // Batch create sale items
+    await tx.saleItem.createMany({
+      data: items.map(item => ({
+        saleId: sale.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: productMap[item.productId].basePrice,
+        totalPrice: item.quantity * productMap[item.productId].basePrice,
+      })),
+    });
 
-      await tx.saleItem.create({
-        data: {
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice,
-        },
-      });
-
-      await tx.shopInventory.updateMany({
+    // Batch update inventory
+    await Promise.all(items.map(item =>
+      tx.shopInventory.updateMany({
         where: { productId: item.productId },
-        data: {
-          quantity: { decrement: item.quantity },
-        },
-      });
-    }
+        data: { quantity: { decrement: item.quantity } },
+      })
+    ));
 
     const createdSale = await tx.sale.findUnique({
       where: { id: sale.id },
@@ -84,9 +76,7 @@ export const createSale = async (items) => {
     });
 
     return sale;
-  }, {
-    timeout: 15000,
-  });
+  }, { timeout: 15000 });
 };
 
 /* ---------------- GET ALL SALES ---------------- */
@@ -317,43 +307,37 @@ export const deleteSale = async (saleId) => {
 };
 
 
-export const parcelSale = async(items) =>{
- 
-
+export const parcelSale = async (items) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const closing = await prisma.dailyClosing.findUnique({
     where: { date: today },
   });
-
-  if (closing?.status === "CLOSED") {
+  if (closing && closing.status === "CLOSED") {
     throw new Error("Sales not allowed. Day already closed.");
   }
 
+  // Batch fetch products and inventories
+  const productIds = items.map(item => item.productId);
+  const [products, inventories] = await Promise.all([
+    prisma.product.findMany({ where: { id: { in: productIds } } }),
+    prisma.shopInventory.findMany({ where: { productId: { in: productIds } } }),
+  ]);
+  const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+  const inventoryMap = Object.fromEntries(inventories.map(inv => [inv.productId, inv]));
+
+  // Validate and calculate totalAmount
+  let totalAmount = 0;
+  for (const item of items) {
+    const product = productMap[item.productId];
+    const inventory = inventoryMap[item.productId];
+    if (!product) throw new Error(`Product not found: ${item.productId}`);
+    if (!inventory || inventory.quantity < item.quantity) throw new Error(`Insufficient stock for product: ${item.productId}`);
+    totalAmount += item.quantity * product.basePrice;
+  }
+
   return prisma.$transaction(async (tx) => {
-    let totalAmount = 0;
-
-    for (const item of items) {
-      const inventory = await tx.shopInventory.findFirst({
-        where: { productId: item.productId },
-      });
-
-      if (!inventory || inventory.quantity < item.quantity) {
-        throw new Error("Insufficient stock");
-      }
-
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
-
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      totalAmount += item.quantity * product.basePrice;
-    }
-
     const sale = await tx.sale.create({
       data: {
         saleNumber: `PARCEL-${Date.now()}`,
@@ -362,28 +346,24 @@ export const parcelSale = async(items) =>{
       },
     });
 
-    for (const item of items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
+    // Batch create sale items
+    await tx.saleItem.createMany({
+      data: items.map(item => ({
+        saleId: sale.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: productMap[item.productId].basePrice,
+        totalPrice: item.quantity * productMap[item.productId].basePrice,
+      })),
+    });
 
-      await tx.saleItem.create({
-        data: {
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.basePrice,
-          totalPrice: item.quantity * product.basePrice,
-        },
-      });
-
-      await tx.shopInventory.updateMany({
+    // Batch update inventory
+    await Promise.all(items.map(item =>
+      tx.shopInventory.updateMany({
         where: { productId: item.productId },
-        data: {
-          quantity: { decrement: item.quantity },
-        },
-      });
-    }
+        data: { quantity: { decrement: item.quantity } },
+      })
+    ));
 
     const createdSale = await tx.sale.findUnique({
       where: { id: sale.id },
@@ -401,7 +381,5 @@ export const parcelSale = async(items) =>{
     });
 
     return sale;
-  }, {
-    timeout: 15000,
-  });
+  }, { timeout: 15000 });
 };

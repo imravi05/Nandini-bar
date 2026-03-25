@@ -18,8 +18,6 @@ export const useCreateSale = () => {
     },
   });
 };
-<<<<<<< HEAD
-=======
 export const useCreateParcelSale = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -30,7 +28,6 @@ export const useCreateParcelSale = () => {
     },
   });
 };
->>>>>>> 594edac1fb916fda425bd99e954d99b0c4b7a8d1
 
 export const useDeleteSale = () => {
   const queryClient = useQueryClient();

@@ -42,11 +42,11 @@ const Sidebar = ({ isMobile, closeMenu }) => {
             className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl"
             style={{ backgroundColor: "#00ADB5", color: "#fff" }}
           >
-            N
+            OM
           </div>
           <div>
             <h2 className="text-xl font-bold text-white tracking-wide">
-              Nandini Bar
+              OM SAI RAM
             </h2>
             <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">
               Management

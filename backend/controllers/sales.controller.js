@@ -60,7 +60,7 @@ export const deleteSale = async (req, res, next) => {
 
 export const parcelSale = async (req, res, next) => {
   try {
-    console.log("parcelSale items:", req.body.items, Array.isArray(req.body.items));
+    
     const sale = await salesService.parcelSale(req.body.items); 
     res.status(201).json({ success: true, data: sale });
   } catch (error) {
