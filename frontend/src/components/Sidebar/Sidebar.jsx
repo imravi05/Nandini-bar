@@ -38,18 +38,34 @@ const Sidebar = ({ isMobile, closeMenu }) => {
       {/* Logo / Brand */}
       <div className="p-6 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl"
-            style={{ backgroundColor: "#00ADB5", color: "#fff" }}
-          >
-            OM
+          {/* Inline SVG Logo - Scaled up for better visibility */}
+          <div className="w-12 h-12 flex-shrink-0">
+            <svg
+              viewBox="0 0 100 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full"
+            >
+              <path
+                d="M30 25H70L50 50L30 25Z"
+                fill="#00ADB5"
+                fillOpacity="0.2"
+              />
+              <path
+                d="M30 25H70L50 50V80M40 80H60"
+                stroke="#00ADB5"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-white tracking-wide">
-              OM SAI RAM
+          <div className="hidden md:block">
+            <h2 className="text-xl font-bold text-white tracking-widest text-shadow-sm uppercase leading-none">
+              OM SAI KRUPA
             </h2>
-            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">
-              Management
+            <p className="text-[9px] text-teal-400 font-bold uppercase tracking-[0.3em] mt-2">
+              Bar
             </p>
           </div>
         </div>
