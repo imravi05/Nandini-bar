@@ -1,7 +1,7 @@
 {
-  "name": "nadinin-bar",
-  "version": "1.0.1",
-  "description": "Nandini Bar is a desktop application built using Electron, React, and Prisma. It serves as a comprehensive management tool for bar owners, providing features such as inventory management, sales tracking, employee scheduling, and customer relationship management. The application is designed to streamline operations and enhance the overall efficiency of bar management.",
+  "name": "om sai krupa",
+  "version": "1.0.2",
+  "description": "om sai krupa Bar is a desktop application built using Electron, React, and Prisma. It serves as a comprehensive management tool for bar owners, providing features such as inventory management, sales tracking, employee scheduling, and customer relationship management. The application is designed to streamline operations and enhance the overall efficiency of bar management.",
   "main": "electron/main.js",
   "scripts": {
     "backend": "cd backend && npm run dev",
