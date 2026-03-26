@@ -83,9 +83,14 @@ const DataTable = ({ columns, data, onEdit, onDelete, isLoading }) => {
                         )}
                         {onDelete && (
                           <button
-                            onClick={() => onDelete(row)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                            title="Delete"
+                            onClick={() => !row._isDeleteDisabled && onDelete(row)}
+                            disabled={row._isDeleteDisabled}
+                            className={`p-1.5 rounded-md transition-all duration-200 ${
+                              row._isDeleteDisabled 
+                                ? "text-slate-200 cursor-not-allowed opacity-50" 
+                                : "text-red-500 hover:bg-red-50 cursor-pointer shadow-sm"
+                            }`}
+                            title={row._isDeleteDisabled ? "Cannot delete product with active stock/history" : "Delete"}
                           >
                             <Trash2 size={20} />
                           </button>

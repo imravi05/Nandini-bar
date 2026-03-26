@@ -30,7 +30,15 @@ export default function Products() {
     category: categoryFilter
   });
 
-  const products = Array.isArray(productsData?.data) ? productsData.data : [];
+  const products = Array.isArray(productsData?.data) 
+    ? productsData.data.map(p => {
+        const totalStock = p.inventory?.reduce((sum, inv) => sum + (inv.quantity || 0), 0) || 0;
+        return {
+          ...p,
+          _isDeleteDisabled: totalStock > 0 // Gray out if stock exists
+        };
+      }) 
+    : [];
   const pagination = productsData?.pagination ?? {
     page: 1,
     totalPages: 1,
@@ -187,7 +195,16 @@ export default function Products() {
         toast.success("Product deleted successfully");
       },
       onError: (error) => {
-        toast.error(error.response?.data?.message || "Failed to delete product");
+        // [NO DRAMA SOLUTION] - If it's a technical database error, show a friendly message
+        const rawMsg = (error.response?.data?.message || "").toLowerCase();
+        const isDatabaseError = rawMsg.includes("prisma") || rawMsg.includes("constraint") || rawMsg.includes("invocation");
+
+        const friendlyMsg = isDatabaseError 
+          ? "Cannot delete product: It is linked to your sales history OR daily reports." 
+          : (error.response?.data?.message || "Failed to delete product.");
+
+        toast.error(friendlyMsg);
+        console.error("Delete Error details:", error);
       }
     });
   };
