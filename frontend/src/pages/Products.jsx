@@ -5,9 +5,10 @@ import toast from "react-hot-toast";
 import { Plus, X, Search } from "lucide-react";
 import SearchableDropdown from "../components/Form/SearchableDropdown";
 import productData from "../../data.json";
-import { LayoutGrid } from "lucide-react";
 import authService from "../services/auth.service";
+import { LayoutGrid } from 'lucide-react';
 import { canPerformAction, ROLES } from "../config/roles";
+import AuditPagination from "../components/AuditLogs/AuditPagination";
 
 // Derive unique, sorted lists from dat.json
 const PREDEFINED_PRODUCT_NAMES = [
@@ -18,10 +19,24 @@ const PREDEFINED_CATEGORIES = [
 ].sort();
 
 export default function Products() {
-  const { data: productsData, isLoading, isError, error } = useProducts();
-  const products = Array.isArray(productsData?.data) 
-    ? productsData.data 
-    : (Array.isArray(productsData) ? productsData : []);
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+  const { data: productsData, isLoading, isError, error } = useProducts({
+    page,
+    limit: 10,
+    search: searchQuery,
+    category: categoryFilter
+  });
+
+  const products = Array.isArray(productsData?.data) ? productsData.data : [];
+  const pagination = productsData?.pagination ?? {
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    limit: 10,
+  };
 
   useEffect(() => {
     if (isError) {
@@ -35,8 +50,18 @@ export default function Products() {
   const updateProductMutation = useUpdateProduct();
   const deleteProductMutation = useDeleteProduct();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const handlePageChange = (p) => setPage(p);
+
+  // Set page back to 1 when searching or filtering
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  const handleCategoryChange = (val) => {
+    setCategoryFilter(val);
+    setPage(1);
+  };
 
   const user = authService.getCurrentUser();
   const userRole = user?.role || ROLES.CASHIER;
@@ -230,17 +255,15 @@ export default function Products() {
           {/* Category Filter */}
           <select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => handleCategoryChange(e.target.value)}
             className="py-2.5 pl-3 pr-8 rounded-xl border border-gray-200 text-sm text-slate-600 outline-none transition bg-white shrink-0 focus-brand"
           >
             <option value="">All Categories</option>
-            {[...new Set(products.map((p) => p.category).filter(Boolean))]
-              .sort()
-              .map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
+            {PREDEFINED_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
 
           {/* Search bar */}
@@ -252,13 +275,16 @@ export default function Products() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               placeholder="Search products..."
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none transition focus-brand"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setPage(1);
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X size={14} />
@@ -276,21 +302,18 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col gap-4">
         <DataTable
           columns={columns}
-          data={products.filter((p) => {
-            const matchSearch =
-              p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              p.category?.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchCategory = categoryFilter
-              ? p.category === categoryFilter
-              : true;
-            return matchSearch && matchCategory;
-          })}
+          data={products}
           isLoading={isLoading}
           onEdit={handleEditProduct}
           onDelete={canDeleteProduct ? handleDeleteProduct : undefined}
+        />
+
+        <AuditPagination
+          pagination={pagination}
+          onPageChange={handlePageChange}
         />
       </div>
 

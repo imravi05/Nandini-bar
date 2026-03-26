@@ -7,10 +7,10 @@ const PRODUCT_KEYS = {
   detail: (id) => [...PRODUCT_KEYS.details(), id],
 };
 
-export const useProducts = () => {
+export const useProducts = (params = {}) => {
   return useQuery({
-    queryKey: PRODUCT_KEYS.all,
-    queryFn: productService.getProducts,
+    queryKey: [...PRODUCT_KEYS.all, params],
+    queryFn: () => productService.getProducts(params),
   });
 };
 
