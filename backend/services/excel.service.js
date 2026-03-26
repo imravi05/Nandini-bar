@@ -54,10 +54,13 @@ export const generateDailyExcel = async (closingData) => {
   let totalSoldQty = 0;
   let totalClosingValue = 0;
   let totalParcelQty = 0;
+  
 
   const categoryTotals = {};
 
   for (const item of closingData.summaries) {
+    // CB = OB - (Parcel + Sale)
+    const calculatedClosingStock = item.openingStock - (item.soldQuantity || 0);
     const row = sheet.addRow([
       item.product.name,
       item.openingStock,
@@ -66,7 +69,7 @@ export const generateDailyExcel = async (closingData) => {
       item.parcel,
       item.totalStock,
       item.soldQuantity,
-      item.closingStock,
+      calculatedClosingStock,
       item.saleAmount,
       item.closingValue,
     ]);
@@ -86,11 +89,9 @@ export const generateDailyExcel = async (closingData) => {
     totalParcelQty += item.parcel;
 
     const category = item.product.category;
-
     if (!categoryTotals[category]) {
       categoryTotals[category] = 0;
     }
-
     categoryTotals[category] += item.saleAmount;
   }
 
