@@ -5,9 +5,9 @@ A full-stack desktop application built to streamline billing, inventory, and ord
 Designed with real-world use cases in mind — focusing on performance, reliability, and ease of use.
 
 🚀 Demo
-🎥 Demo Video: (add link if you have)
-🌐 Live Backend: (Render link)
-💻 Download App: (Electron build link)
+🎥 Demo Video: 
+🌐 Live Backend: 
+💻 Download App: 
 💡 Problem Statement
 
 Many small-scale bars and restaurants still rely on manual billing or outdated systems, leading to:
