@@ -62,7 +62,7 @@ const Sidebar = ({ isMobile, closeMenu }) => {
           </div>
           <div className="hidden md:block">
             <h2 className="text-xl font-bold text-white tracking-widest text-shadow-sm uppercase leading-none">
-              OM SAI KRUPA
+              Nandini
             </h2>
             <p className="text-[9px] text-teal-400 font-bold uppercase tracking-[0.3em] mt-2">
               Bar
