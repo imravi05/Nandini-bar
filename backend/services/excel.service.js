@@ -16,7 +16,7 @@ export const generateDailyExcel = async (closingData) => {
 
   // 🟢 TITLE
   sheet.mergeCells("A1:H1");
-  sheet.getCell("A1").value = "OM SAI KRUPA - DAILY SALES REPORT";
+  sheet.getCell("A1").value = "Nandini Bar - DAILY SALES REPORT";
   sheet.getCell("A1").font = { size: 16, bold: true };
   sheet.getCell("A1").alignment = { horizontal: "center" };
 
@@ -30,7 +30,7 @@ export const generateDailyExcel = async (closingData) => {
     "OB",
     "Received",
     "Total",
-    "Parcell",
+    "Parcel",
     "Total",
     "Sale",
     "CB",
