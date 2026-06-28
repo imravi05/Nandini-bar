@@ -1,0 +1,6 @@
+<svg width="128" height="128" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Solid Bowl for maximum browser tab visibility -->
+  <path d="M10 15H90L50 55L10 15Z" fill="#00ADB5"/>
+  <!-- Ultra-Bold Stem and Base for scale -->
+  <path d="M50 55V85M25 85H75" stroke="#00ADB5" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>

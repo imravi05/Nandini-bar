@@ -51,6 +51,10 @@ export const getProducts = async (query) => {
     ];
   }
 
+  if (query.category) {
+    where.category = query.category;
+  }
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,

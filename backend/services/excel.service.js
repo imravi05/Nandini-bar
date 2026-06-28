@@ -16,7 +16,11 @@ export const generateDailyExcel = async (closingData) => {
 
   // 🟢 TITLE
   sheet.mergeCells("A1:H1");
+<<<<<<< HEAD
   sheet.getCell("A1").value = "Nandini Bar - DAILY SALES REPORT";
+=======
+  sheet.getCell("A1").value = "NANDINI BAR - DAILY SALES REPORT";
+>>>>>>> 32861748022e058faa81befa7acfa91562441796
   sheet.getCell("A1").font = { size: 16, bold: true };
   sheet.getCell("A1").alignment = { horizontal: "center" };
 
